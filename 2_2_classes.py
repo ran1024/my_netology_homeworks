@@ -17,12 +17,6 @@ class Animals:
     def get_info(self):
         return "Это {}, вес: {}кг.".format(self.animal, self.weight)
 
-    def get_weight(self):
-        return self.weight
-
-    def get_animal(self):
-        return self.animal
-
     def get_name(self):
         return self.name
 
@@ -109,11 +103,11 @@ def main():
     max_weight = all_weight = 0
     max_name = max_animal = ''
     for animal in all_animals:
-        all_weight += animal.get_weight()
-        if max_weight < animal.get_weight():
-            max_weight = animal.get_weight()
-            max_animal = animal.get_animal()
-            max_name = animal.get_name()
+        all_weight += animal.weight
+        if max_weight < animal.weight:
+            max_weight = animal.weight
+            max_animal = animal.animal
+            max_name = animal.name
     print("Общий вес животных: {}кг.".format(round(all_weight, 2)))
     print("Самое тяжёлое животное: {0} {1} весит {2}кг".format(max_animal, max_name, max_weight))
 
