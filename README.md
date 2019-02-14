@@ -1,2 +1,2 @@
 # netology_home_tasks
-Home tasks for курса Python
+# Homeworks for my study on a course of Python.
