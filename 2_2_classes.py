@@ -10,7 +10,7 @@ class Animals:
         if animal in ('гусь', 'курица', 'утка', 'корова', 'баран', 'коза'):
             self.animal = animal
             self.name = name
-            self.weight = weight
+            self.weight = float(weight)
         else:
             exit(1)
 
