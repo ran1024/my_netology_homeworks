@@ -29,8 +29,11 @@ class MyManager:
         print('На выполнение кода было потрачено: {0} сек.'.format(self.time_stop - self.time_start))
 
 
-with MyManager('LICENSE') as fh:
-    for line in fh:
-        print(line)
-        sleep(0.01)
+try:
+    with MyManager('LICENSE') as fh:
+        for line in fh:
+            print(line)
+            sleep(0.01)
+except EnvironmentError as err:
+    print(err)
 
