@@ -22,15 +22,31 @@ class GetUserVK:
         }
 
     def get_friends(self, user_id):
+        """
+        Функция получает список друзей, удаляет забаненные и удалённые записи.
+        Возвращает список славарей: {идентификатор: имя_фамилия} друзей пользователя.
+        :param user_id:
+        :return:
+        """
         params = self.get_params()
         params['user_id'] = user_id
-        params['fields'] = ('nickname', 'city')
-        response = requests.get('{0}users.get'.format(self.url), params)
-        return response.json()
+        params['fields'] = 'nickname'
+        response = requests.get('{0}friends.get'.format(self.url), params)
+        friend_list = response.json()['response']['items']
+        friends = []
+        while friend_list:
+            item = friend_list.pop()
+            if 'deactivated' not in item:
+               friends.append({item['id']: item['first_name'] + ' ' + item['last_name']})
+        return friends
 
 
 user1 = GetUserVK(TOKEN)
-#user1_friends = user1.get_friends('6888361')
-user1_friends = user1.get_friends('534652320')
+user1_friends = user1.get_friends('6888361')
+user2 = GetUserVK(TOKEN)
+user2_friends = user1.get_friends('23539')
+
+#user1_friends = user1.get_friends('1945830')
+print(len(user1_friends))
 pprint.pprint(user1_friends)
 
