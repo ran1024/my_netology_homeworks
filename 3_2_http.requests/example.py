@@ -41,17 +41,13 @@ def read_write_file(input_file, output_file, from_lang, to_lang):
 
 def translate_it(text, from_lang, to_lang):
     """
-    https://translate.yandex.net/api/v1.5/tr.json/translate ?
-    key=<API-ключ>
-     & text=<переводимый текст>
-     & lang=<направление перевода>
-     & [format=<формат текста>]
-     & [options=<опции перевода>]
-     & [callback=<имя callback-функции>]
+    Функция принимает текст для перевода, языки с какого на какой переводить
+    и делает запрос в яндекс-перводчик.
+    :param text:
+    :param from_lang:
     :param to_lang:
     :return:
     """
-
     params = {
         'key': API_KEY,
         'text': text,
