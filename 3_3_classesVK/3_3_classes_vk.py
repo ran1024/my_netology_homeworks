@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# 2_2_classes.py
+# 3_3_classes_vk.py
+#
+# Программа принимает произвольное количество id пользователей и возвращает
+# число и список общих друзей в виде массива экземпляров классов. Забаненные
+# и удалённые записи друзей не учитываются. Команда print(user) выводит ссылку
+# на профиль пользователя в сети VK.
+# В качестве токена использовался мой сервисный ключ.
 #
 
 import requests
 import functools
-import pprint
 
-TOKEN = 'b534eb8cb534eb8cb534eb8c80b55df025bb534b534eb8ce94b94b6299c2a63772794e9'
+TOKEN = 'b534eb8cb534eb8cb534eb8c80b55df025bb534b534eb8ce94b94b6299c2a63772794e09'
+
+
+class VkRequestException(Exception): pass
 
 
 class UserVK:
@@ -50,7 +58,18 @@ def get_user_vk(url, command, params):
     идентификаторы друзей пользователя;
     Если получена команда users: возвращается список объектов пользователей.
     """
-    response = requests.get('{0}{1}.get'.format(url, command), params)
+    response = []
+    try:
+        response = requests.get('{0}{1}.get'.format(url, command), params)
+        if response.status_code != 200 or 'error' in response.json():
+            raise VkRequestException()
+
+    except VkRequestException:
+        print('Произошла ошибка при получении запроса:', response.json())
+        exit(1)
+    except requests.exceptions.RequestException as err:
+        print('Requests error:', err)
+
     if command == 'friends':
         friend_list = response.json()['response']['items']
         friends = set()
@@ -104,7 +123,7 @@ def main():
     mutual_friends_id = get_mutual_friend(url, users_id, params)
     if mutual_friends_id:
         print("Число общих друзей:", len(mutual_friends_id))
-        pprint.pprint(mutual_friends_id)
+        # pprint.pprint(mutual_friends_id)
     else:
         print("У этих пользователей нет общих друзей!")
         exit(1)
@@ -118,6 +137,8 @@ def main():
 
     for friend in mutual_friends:
         print(friend)
+
+    # test(mutual_friends)
 
 
 main()
