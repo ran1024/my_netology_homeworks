@@ -16,21 +16,19 @@ import functools
 TOKEN = 'b534eb8cb534eb8cb534eb8c80b55df025bb534b534eb8ce94b94b6299c2a63772794e09'
 
 
-class VkRequestException(Exception): pass
-
-
 class UserVK:
     """
     Класс, описывающий пользователя ВК.
     Команда print(user) выводит ссылку на профиль пользователя в сети VK.
     """
-    def __init__(self, url, params, user_dict):
-        self.url = url
+    def __init__(self, user_dict):
         self.user_dict = user_dict
-        self.params = params
 
     def __str__(self):
         return "https://vk.com/id{}".format(self.get_user_id())
+
+    def __and__(self, other):
+        return self.user_dict['friends'] & other.user_dict['friends']
 
     def get_user_id(self):
         return self.user_dict['id']
@@ -50,54 +48,38 @@ class UserVK:
     def get_user_country(self):
         return self.user_dict['country']['title'] if 'country' in self.user_dict else 'Страна не указана.'
 
+    def get_user_friends(self):
+        return self.user_dict['friends'] if self.user_dict['friends'] else 'Список друзей пуст.'
 
-def get_user_vk(url, command, params):
+
+def get_users_vk(url, params):
     """
-    Функция получает список друзей, удаляет забаненные и удалённые записи.
-    Если получена команда friends: возвращается множество, содержащее
-    идентификаторы друзей пользователя;
-    Если получена команда users: возвращается список объектов пользователей.
-    """
-    response = []
-    try:
-        response = requests.get('{0}{1}.get'.format(url, command), params)
-        if response.status_code != 200 or 'error' in response.json():
-            raise VkRequestException()
-
-    except VkRequestException:
-        print('Произошла ошибка при получении запроса:', response.json())
-        exit(1)
-    except requests.exceptions.RequestException as err:
-        print('Requests error:', err)
-
-    if command == 'friends':
-        friend_list = response.json()['response']['items']
-        friends = set()
-        while friend_list:
-            item = friend_list.pop()
-            if 'deactivated' not in item:
-                friends.add(item['id'])
-        return friends
-    else:
-        return response.json()['response']
-
-
-def get_mutual_friend(url, users_id, params):
-    """
-    Функция принимает произвольное количество id пользователей и возвращает
-    список id общих друзей.
+    Функция получает список пользователей, удаляет забаненные и удалённые записи.
+    Возвращает список объектов пользователей, в которые вставлено множество c ключём
+    'friends', содержащее идентификаторы друзей пользователя;
     :param url:
-    :param users_id:
     :param params:
     :return:
     """
-    users_friend = []
-    for i in range(len(users_id)):
-        params['user_id'] = users_id[i]
-        users_friend.append(get_user_vk(url, 'friends', params))
-        print(f"User {users_id[i]} имеет {len(users_friend[i])} друзей.")
-
-    return list(functools.reduce(lambda x, y: x & y, users_friend))
+    users_vk = []
+    try:
+        response1 = requests.get('{0}users.get'.format(url), params)
+        params.pop('user_ids')
+        for user in response1.json()['response']:
+            friends = set()
+            params['user_id'] = user['id']
+            response2 = requests.get('{0}friends.get'.format(url), params)
+            for item in response2.json()['response']['items']:
+                if 'deactivated' not in item:
+                    friends.add(item['id'])
+            user['friends'] = friends
+            users_vk.append(user)
+        return users_vk
+    except KeyError:
+        print('Произошла ошибка при получении запроса:', response1.json())
+        exit(1)
+    except requests.exceptions.RequestException as err:
+        print('Requests error:', err)
 
 
 def test(mutual_friends):
@@ -112,34 +94,43 @@ def test(mutual_friends):
         print('{0:10} {1}'.format('Nickname:', friend.get_user_nickname()))
         print('{0:10} {1}'.format('Status:', friend.get_user_status()))
         print('{0:10} {1}'.format('City:', friend.get_user_city()))
-        print('{0:10} {1}\n'.format('Country:', friend.get_user_country()))
+        print('{0:10} {1}'.format('Country:', friend.get_user_country()))
+        print('{0:10} {1}\n'.format('friends:', friend.get_user_friends()))
 
 
 def main():
     users_id = (6888361, 23539, 8781042)
     url = 'https://api.vk.com/method/'
-    params = {'access_token': TOKEN, 'fields': 'nickname', 'v': 5.92}
-
-    mutual_friends_id = get_mutual_friend(url, users_id, params)
-    if mutual_friends_id:
-        print("Число общих друзей:", len(mutual_friends_id))
-        # pprint.pprint(mutual_friends_id)
-    else:
-        print("У этих пользователей нет общих друзей!")
-        exit(1)
+    params = {'access_token': TOKEN,
+              'fields': 'status, city, country, nickname',
+              'v': 5.92,
+              'user_ids': ','.join(map(str, users_id))}
 
     mutual_friends = []
-    params.pop('user_id')
-    params.update({'fields': 'status, city, country, nickname', 'user_ids': ','.join(map(str, mutual_friends_id))})
-    list_of_friends = get_user_vk(url, 'users', params)
-    for friend in list_of_friends:
-        mutual_friends.append(UserVK(url, params, friend))
+    users_list = []
+    for user_dict in get_users_vk(url, params):
+        users_list.append(UserVK(user_dict))
+
+    users_friends = []
+    try:
+        for i in range(len(users_list)):
+            users_friends.append(users_list[i] & users_list[i+1])
+    except IndexError:
+        mutual_friends_id = list(functools.reduce(lambda x, y: x & y, users_friends))
+        if mutual_friends_id:
+            print("Число общих друзей:", len(mutual_friends_id))
+            params.pop('user_id')
+            params.update({'user_ids': ','.join(map(str, mutual_friends_id))})
+            for user_dict in get_users_vk(url, params):
+                mutual_friends.append(UserVK(user_dict))
+        else:
+            print("У этих пользователей нет общих друзей!")
+            exit(1)
 
     for friend in mutual_friends:
         print(friend)
 
     # test(mutual_friends)
-
 
 main()
 
