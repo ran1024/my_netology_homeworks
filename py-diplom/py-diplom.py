@@ -80,7 +80,6 @@ class MainForm(npyscreen.ActionForm):
         self.__class__.CANCEL_BUTTON_BR_OFFSET = (2, 14)
         self.__class__.OK_BUTTON_TEXT = 'Выход'
         self.y, self.x = self.useable_space()
-        # Добавляем виджет TitleText на форму
         self.user_name_id = self.add(npyscreen.TitleText,
                                      name="Имя ползователя или ID:",
                                      use_two_lines=False,
@@ -92,19 +91,20 @@ class MainForm(npyscreen.ActionForm):
         self.text2 = self.add(npyscreen.FixedText, value='', editable=False)
 
         self.slider = self.add(npyscreen.SliderPercent, out_of=100, step=1, rely=self.y - 4, editable=False)
+        self.ind = 0
 
     def get_user_attr(self):
         user = UserVK()
         self.user_name_id.editable = False
         if self.user_name_id.value.isdigit():
-            result = user.get_friends(self.user_name_id)
+            result = user.get_friends(self.user_name_id.value)
             if result[0] == 'Error':
                 self.user_name_id.value = ''
                 self.text2.value = result[1]
             else:
                 self.text2.value = f'Количество друзей: {result[1]}'
                 self.slider.value = 10
-                self.c_button.destroy()
+                self.ind = 1
         else:
             result = user.get_userid_by_name(self.user_name_id.value)
             if result[0] == 'Error':
@@ -120,7 +120,7 @@ class MainForm(npyscreen.ActionForm):
                 else:
                     self.text2.value = f'Количество друзей: {result[1]}'
                     self.slider.value = 10
-                    self.c_button.destroy()
+                    self.ind = 1
 
     # переопределенный метод, срабатывающий при нажатии на кнопку «Выход»
     def on_ok(self):
@@ -128,24 +128,17 @@ class MainForm(npyscreen.ActionForm):
 
     # переопределенный метод, срабатывающий при нажатии на кнопку «Старт»
     def on_cancel(self):
+        if self.ind:
+            return
         if self.user_name_id.value:
             self.get_user_attr()
         else:
             self.user_name_id.editable = True
             self.text1.value = ''
-
-
-def main():
-    # if len(sys.argv) < 2 or sys.argv[1] in {"-h", "--help"}:
-    #     print('usade: {0} user_vk_ID'.format(sys.argv[0].rpartition("/")[2]))
-    #     sys.exit(0)
-    #
-    # if not sys.argv[1].isdigit():
-    #     print('ID пользователя должно содержать только цифры!')
-    # print(len(sys.argv))
-    MyApp = App()
-    MyApp.run()
+            self.text2.value = ''
 
 
 if __name__ == '__main__':
-    main()
+    MyApp = App()
+    MyApp.run()
+    # main()
