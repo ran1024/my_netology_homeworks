@@ -7,6 +7,7 @@
 import npyscreen
 from time import sleep
 import requests
+import pprint
 
 
 class UserVK:
@@ -92,7 +93,7 @@ class UserVK:
         """
         Если не указан user_id, функция возвращает количество групп у пользователя,
         а множество, содержащее id групп пользователя запоминается в атрибуте экземпляра класса.
-        Если указан user_id, возвращается множество с перечнем id групп аользователя.
+        Если указан user_id, возвращается множество с перечнем id групп пользователя.
         :param user_id:
         :return:
         """
@@ -117,7 +118,7 @@ class UserVK:
         :param list_groups:
         :return:
         """
-        self.params['group_ids'] = list_groups
+        self.params['group_ids'] = str(list_groups)
         self.params['fields'] = 'members_count'
         del self.params['user_id']
         out_list = []
@@ -125,11 +126,12 @@ class UserVK:
         try:
             result = response.json()['response']
             for item in result:
-                _dict ={}
-                _dict['gid'] = item['id']
-                _dict['name'] = item['name']
-                _dict['members_count'] = item['members_count']
-                out_list.append(_dict)
+                var = {
+                        'name': item['name'],
+                        'gid': item['id'],
+                        'members_count': item['members_count']
+                }
+                out_list.append(var)
             return 'groups', out_list
         except KeyError:
             return 'Error', 'Произошла ошибка при запросе параметров групп.'
@@ -178,10 +180,11 @@ class MainForm(npyscreen.ActionForm):
     def get_diff_groups(self):
         """
         Вычисляем список групп в ВК в которых состоит пользователь, но не состоит никто из его друзей.
+        Получаем атрибутв каждой группы, выводим на экран и пишем в файл в виде json.
         :return:
         """
         secret_groups = self.user.user_groups
-        self.text5.value = f'Группы пользователя: {secret_groups}'
+        # self.text5.value = f'Группы пользователя: {secret_groups}'
         self.widget_update()
         num = 0
         a = round(97 / len(self.user.user_friends), 2)
@@ -189,6 +192,9 @@ class MainForm(npyscreen.ActionForm):
         for friend_id in self.user.user_friends:
             num += 1
             result = self.user.get_groups(friend_id)
+            if result[0] == 'Error':
+                self.text6.value = f'Друг № {num} недоступет и учитываться не будет.'
+                continue
             if result[0] == 'friend':
                 if result[1]:
                     secret_groups.difference_update(result[1])
@@ -199,14 +205,23 @@ class MainForm(npyscreen.ActionForm):
             self.widget_update()
             sleep(0.1)
 
+        self.text6.value = ''
         self.text4.value = f'Количество секретных групп: {len(secret_groups)}'
         self.text5.value = ''
         self.slider.value = 100
-        result = self.user.get_group_info(secret_groups)
+        secret_str = ','.join([str(q) for q in secret_groups])
+        result = self.user.get_group_info(secret_str)
         if result[0] == 'Error':
             self.if_error(result[1])
         else:
-            self.box.value = str(result[1])
+            self.box.value = pprint.pformat(result[1])
+            try:
+                with open('groups.json', "w") as fh:
+                    pprint.pprint(result[1], stream=fh)
+                self.text5.value = 'Результат записан в файл "groups.json".'
+            except EnvironmentError as err:
+                self.text6.value = 'Не удалось записать результат в файл "groups.json".'
+                self.box.value = pprint.pformat(err)
 
     def processing_of_result(self, result, text):
         if result[0] == 'Error':
@@ -222,6 +237,9 @@ class MainForm(npyscreen.ActionForm):
                 self.text2.value = f'Количество друзей: {result[1]}'
                 self.slider.value = 2
                 self.widget_update()
+                if not result[1]:
+                    self.if_error('У пользователя нет друзей. Для следующей попытки нажмите "Старт".')
+                    return
                 self.ind = 1
                 result = self.user.get_groups()
                 if result[0] == 'Error':
@@ -232,11 +250,8 @@ class MainForm(npyscreen.ActionForm):
                     self.widget_update()
                     self.ind = 1
                     if not result[1]:
-                        self.text6.value = 'Пользователь не состоит ни в одной группе!' \
-                                           ' Для следующей попытки нажмите "Старт".'
-                        self.slider.value = 100
-                        self.user_name_id.value = ''
-                        self.ind = 0
+                        self.if_error('Пользователь не состоит ни в одной группе!'
+                                      ' Для следующей попытки нажмите "Старт".')
                         return
                     self.get_diff_groups()
 
@@ -280,6 +295,7 @@ class MainForm(npyscreen.ActionForm):
 
     def if_error(self, msg):
         self.user_name_id.value = ''
+        self.slider.value = 100
         self.text6.value = msg
         self.ind = 0
 
