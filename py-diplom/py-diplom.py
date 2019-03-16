@@ -111,20 +111,26 @@ class UserVK:
         else:
             return 'friend', set(result)
 
-    def get_group_members(self, list_groups):
+    def get_group_info(self, list_groups):
+        """
+        Получаем список групп и возвращаем массив словарей атрибутов этих групп.
+        :param list_groups:
+        :return:
+        """
         self.params['group_ids'] = list_groups
         self.params['fields'] = 'members_count'
         del self.params['user_id']
+        out_list = []
         response = requests.get('{0}groups.getById'.format(self.url), self.params)
         try:
             result = response.json()['response']
             for item in result:
-                for key in item:
-                    if key == 'id':
-                        item['gid'] = item['id']
-                    if key != 'name' or 'members_count':
-                        del item[key]
-            return 'groups', result
+                _dict ={}
+                _dict['gid'] = item['id']
+                _dict['name'] = item['name']
+                _dict['members_count'] = item['members_count']
+                out_list.append(_dict)
+            return 'groups', out_list
         except KeyError:
             return 'Error', 'Произошла ошибка при запросе параметров групп.'
 
@@ -157,11 +163,11 @@ class MainForm(npyscreen.ActionForm):
         self.text2 = self.add(npyscreen.FixedText, value='', editable=False)
         self.text3 = self.add(npyscreen.FixedText, value='', editable=False)
         self.text4 = self.add(npyscreen.FixedText, value='', editable=False,
-                                    color='GOOD', rely=10, relx=self.x // 2 - 14)
-        self.text5 = self.add(npyscreen.FixedText, value='', editable=False, color='CONTROL', rely=12)
-        self.text6 = self.add(npyscreen.FixedText, value='', editable=False, color='DANGER', rely=13)
+                                    color='GOOD', rely=8, relx=self.x // 2 - 14)
+        self.text5 = self.add(npyscreen.FixedText, value='', editable=False, color='CONTROL', rely=10)
+        self.text6 = self.add(npyscreen.FixedText, value='', editable=False, color='DANGER', rely=11)
 
-        self.box = self.add(InputBox, name="Результат", rely=15, height=self.y - 20,
+        self.box = self.add(InputBox, name="Результат", rely=13, height=self.y - 18,
                                     color='STANDOUT', editable=False)
 
         self.slider = self.add(npyscreen.SliderPercent, out_of=100, step=0.01, rely=self.y - 4, editable=False)
@@ -196,25 +202,22 @@ class MainForm(npyscreen.ActionForm):
         self.text4.value = f'Количество секретных групп: {len(secret_groups)}'
         self.text5.value = ''
         self.slider.value = 100
-        result = self.user.get_group_members(secret_groups)
+        result = self.user.get_group_info(secret_groups)
         if result[0] == 'Error':
-            self.user_name_id.value = ''
-            self.text6.value = result[1]
+            self.if_error(result[1])
         else:
-            self.box.value = result[1]
+            self.box.value = str(result[1])
 
     def processing_of_result(self, result, text):
         if result[0] == 'Error':
-            self.user_name_id.value = ''
-            self.text6.value = result[1]
+            self.if_error(result[1])
         else:
             self.text1.value = f'{text} пользователя: {result[1]}'
             self.slider.value = 1
             self.widget_update()
             result = self.user.get_friends()
             if result[0] == 'Error':
-                self.user_name_id.value = ''
-                self.text6.value = result[1]
+                self.if_error(result[1])
             else:
                 self.text2.value = f'Количество друзей: {result[1]}'
                 self.slider.value = 2
@@ -222,9 +225,7 @@ class MainForm(npyscreen.ActionForm):
                 self.ind = 1
                 result = self.user.get_groups()
                 if result[0] == 'Error':
-                    self.user_name_id.value = ''
-                    self.text6.value = result[1]
-                    self.ind = 0
+                    self.if_error(result[1])
                 else:
                     self.text3.value = f'Количество групп: {result[1]}'
                     self.slider.value = 3
@@ -267,7 +268,6 @@ class MainForm(npyscreen.ActionForm):
             self.text5.value = ''
             self.text6.value = ''
             self.slider.value = 0
-            self.get_group_members()
 
     def widget_update(self):
         self.text1.display()
@@ -278,7 +278,7 @@ class MainForm(npyscreen.ActionForm):
         self.text6.display()
         self.slider.display()
 
-    def work_if_error(self,msg):
+    def if_error(self, msg):
         self.user_name_id.value = ''
         self.text6.value = msg
         self.ind = 0
