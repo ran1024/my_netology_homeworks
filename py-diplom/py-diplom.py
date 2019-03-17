@@ -3,11 +3,14 @@
 #
 # py-diplom.py
 #
+# Программа выводит список групп в ВК в которых состоит пользователь, но не состоит никто из его друзей.
+# Входные данные: имя пользователя или его id в ВК, для которого проводится исследование.
+#
 
 import npyscreen
 from time import sleep
 import requests
-import pprint
+import json
 
 
 class UserVK:
@@ -127,9 +130,9 @@ class UserVK:
             result = response.json()['response']
             for item in result:
                 var = {
-                        'name': item['name'],
-                        'gid': item['id'],
-                        'members_count': item['members_count']
+                    'name': item['name'],
+                    'gid': item['id'],
+                    'members_count': item['members_count']
                 }
                 out_list.append(var)
             return 'groups', out_list
@@ -165,17 +168,16 @@ class MainForm(npyscreen.ActionForm):
         self.text2 = self.add(npyscreen.FixedText, value='', editable=False)
         self.text3 = self.add(npyscreen.FixedText, value='', editable=False)
         self.text4 = self.add(npyscreen.FixedText, value='', editable=False,
-                                    color='GOOD', rely=8, relx=self.x // 2 - 14)
+                              color='GOOD', rely=8, relx=self.x // 2 - 14)
         self.text5 = self.add(npyscreen.FixedText, value='', editable=False, color='CONTROL', rely=10)
         self.text6 = self.add(npyscreen.FixedText, value='', editable=False, color='DANGER', rely=11)
 
         self.box = self.add(InputBox, name="Результат", rely=13, height=self.y - 18,
-                                    color='STANDOUT', editable=False)
+                            color='STANDOUT', editable=False)
 
         self.slider = self.add(npyscreen.SliderPercent, out_of=100, step=0.01, rely=self.y - 4, editable=False)
         self.user = UserVK()
         self.ind = 0
-
 
     def get_diff_groups(self):
         """
@@ -193,7 +195,7 @@ class MainForm(npyscreen.ActionForm):
             num += 1
             result = self.user.get_groups(friend_id)
             if result[0] == 'Error':
-                self.text6.value = f'Друг № {num} недоступет и учитываться не будет.'
+                self.text6.value = f'Друг № {num} id: {friend_id} недоступен и учитываться не будет.'
                 continue
             if result[0] == 'friend':
                 if result[1]:
@@ -214,14 +216,14 @@ class MainForm(npyscreen.ActionForm):
         if result[0] == 'Error':
             self.if_error(result[1])
         else:
-            self.box.value = pprint.pformat(result[1])
+            out_str = json.dumps(result[1], indent=1, ensure_ascii=False)
+            self.box.value = out_str
             try:
                 with open('groups.json', "w") as fh:
-                    pprint.pprint(result[1], stream=fh)
+                    fh.write(out_str)
                 self.text5.value = 'Результат записан в файл "groups.json".'
             except EnvironmentError as err:
                 self.text6.value = 'Не удалось записать результат в файл "groups.json".'
-                self.box.value = pprint.pformat(err)
 
     def processing_of_result(self, result, text):
         if result[0] == 'Error':
