@@ -8,4 +8,4 @@
 
 
 def get_employees():
-    pass
+    return 'модуль: people, функция: get_employees'

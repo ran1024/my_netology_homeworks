@@ -9,4 +9,5 @@
 
 def calculate_salary():
     print('Надо бы написать что-нибудь.')
+    return 'модуль: salary, функция: calculate_salary'
 
