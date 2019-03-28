@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# file-name.py
+# main.py
 #
-#  Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
+# Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
+
+
+def main():
+    pass
 
 
 if __name__ == '__main__':
-    import sys
-
-    sys.exit(main(sys.argv))
+    main()

@@ -7,7 +7,6 @@
 #
 
 
-if __name__ == '__main__':
-    import sys
+def calculate_salary():
+    print('Надо бы написать что-нибудь.')
 
-    sys.exit(main(sys.argv))
