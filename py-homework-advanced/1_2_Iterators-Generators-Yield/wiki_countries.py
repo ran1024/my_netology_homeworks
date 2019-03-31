@@ -6,7 +6,7 @@
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
 # Создаётся класс итератора, который для каждой страны из файла FILE_INPUT ищет страницу в википедии.
-# После чего записывает в файл FILE_OUTPUT пару: страна – ссылка.
+# После чего возвращает пару: str(страна – ссылка).
 #
 
 import wikipedia
@@ -50,7 +50,7 @@ def main():
         for item in MyWikiCountries(FILE_INPUT):
             print(item)
             fh.write(f'{item}\n')
-            fh.flush()
+            # fh.flush()
 
 
 if __name__ == '__main__':
