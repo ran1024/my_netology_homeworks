@@ -12,7 +12,7 @@ def logger1(funk):
 
     def wrapper(*args, **kwargs):
         dt_start = datetime.datetime.today()
-        log = f'{dt_start.strftime("%X %d-%m-%Y")}, функция: {funk.__name__}'
+        log = f'{dt_start.strftime("%X %d-%m-%Y")}, {funk.__name__}'
         log += '(' + ', '.join(['{0!r}'.format(i) for i in args] +
                                ['{0}={1!r}'.format(k, v) for k, v in kwargs.items()])
         result = exception = None
@@ -22,17 +22,12 @@ def logger1(funk):
         except Exception as err:
             exception = err
         finally:
-            dt_end = datetime.datetime.today()
             log += ') -> ' + str(result) if exception is None else '{0}: {1}'.format(type(exception), exception)
-            print(log)
+            log += '\n'
+            with open('decorators.log', 'a') as fh:
+                fh.write(log)
         if exception is not None:
             raise exception
     return wrapper
 
 
-@logger1
-def qwerty(a1, a2=None):
-    return a1, a2
-
-
-print(qwerty(2, a2='йфяч вв'))
