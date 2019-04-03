@@ -9,8 +9,10 @@
 # При каждой итерации возвращает md5 хеш каждой строки файла.
 #
 import hashlib
+from Decorators.logger_decor import logger
 
 
+@logger
 def get_md5hash(path):
     with open(path, 'r') as fh:
         while True:
