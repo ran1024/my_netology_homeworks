@@ -15,9 +15,7 @@ def adv_print(*args, start='', max_line=None, in_file=False, **kwargs):
     :param max_line: int() - максимальная длина строки при выводе.
     :param in_file: bool -  определяет, будет ли записан вывод ещё и в файл: ./print.txt
     :param kwargs: служебные параметры штатной print()
-    :return:
     """
-    print(locals())
     sep = kwargs['sep'] if 'sep' in kwargs else ' '
     input_str = sep.join(str(a) for a in args)
     print_string = start + '\n'
