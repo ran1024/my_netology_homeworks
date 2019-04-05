@@ -5,12 +5,6 @@
 #
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
-# Реализацию функции print - adv_print. Может получать три новых необязательных аргумента:
-# start - с чего начинается вывод. По умолчанию пустая строка;
-# max_line - максимальная длина строки при выводе. Если строка превыщает max_line, то вывод
-# автоматически переносится на новую строку;
-# in_file - аргумент, определяющий будет ли записан вывод ещё и в файл.
-#
 
 
 def adv_print(*args, start='', max_line=None, in_file=False, **kwargs):
@@ -19,7 +13,7 @@ def adv_print(*args, start='', max_line=None, in_file=False, **kwargs):
     :param args: строка для печати.
     :param start: str() - с чего начинается вывод. По умолчанию пустая строка;
     :param max_line: int() - максимальная длина строки при выводе.
-    :param in_file: bool -  определяет, будет ли записан вывод ещё и в файл.
+    :param in_file: bool -  определяет, будет ли записан вывод ещё и в файл: ./print.txt
     :param kwargs: служебные параметры штатной print()
     :return:
     """
@@ -37,6 +31,9 @@ def adv_print(*args, start='', max_line=None, in_file=False, **kwargs):
     else:
         print_string = input_str
     print(print_string, **kwargs)
+    if in_file:
+        with open('print.txt', 'w') as fh:
+            fh.write(print_string)
 
 
-adv_print('aaaaaaaaaabbbbbbbbbbqqqqqqqqqq', 'ccccccccccddddddddddeeeee', start='QQ', max_line=30, sep="--")
+adv_print('aaaaaaaaaabbbbbbbbbbqqqqqqqqqq', 'ccccccccccdddddddddd', start='QQ', max_line=30, in_file=True, sep="--")
