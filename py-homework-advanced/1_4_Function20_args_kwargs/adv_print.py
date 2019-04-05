@@ -25,15 +25,18 @@ def adv_print(*args, start='', max_line=None, in_file=False, **kwargs):
     """
     print(locals())
     sep = kwargs['sep'] if 'sep' in kwargs else ' '
-    print_string = sep.join(str(a) for a in args)
-    print(start)
-    if max_line and len(print_string) > int(max_line):
+    input_str = sep.join(str(a) for a in args)
+    print_string = start + '\n'
+    if max_line and len(input_str) > int(max_line):
         y = int(max_line)
         x = 0
-        while x < len(print_string):
-            print(print_string[x:y], **kwargs)
+        while x < len(input_str):
+            print_string += f'{input_str[x:y]}\n'
             x = y
             y += int(max_line)
+    else:
+        print_string = input_str
+    print(print_string, **kwargs)
 
 
-adv_print('aaaaaaaaaabbbbbbbbbbqqqqqqqqqq', 'ccccccccccddddddddddeeeee', max_line=10, sep="--", flush=True)
+adv_print('aaaaaaaaaabbbbbbbbbbqqqqqqqqqq', 'ccccccccccddddddddddeeeee', start='QQ', max_line=30, sep="--")
