@@ -18,7 +18,7 @@ class Contact(object):
         self.additional_num = set()
         self.additional_inf = {}
 
-    def get_additional_inf(self, *args, **kwargs):
+    def set_additional_inf(self, *args, **kwargs):
         """
         Добавление дополнительной информации:
         :param args: список дополнительных тлф.номеров
@@ -30,9 +30,6 @@ class Contact(object):
                 self.additional_num.add(num)
         for k, v in kwargs.items():
             self.additional_inf[k] = v
-
-    def chg_elite(self, elite):
-        self.elite = elite
 
     def __str__(self):
         result = (f'\nИмя: {self.name}'
@@ -47,11 +44,37 @@ class Contact(object):
 
 
 class PhoneBook(object):
-    pass
+
+    def __init__(self, name):
+        self.name_phone_book = name
+        self.contact_list = []
+
+    def add_contact(self,  name, surname, phone, elite=False):
+        contact = Contact(name, surname, phone, elite)
+        self.contact_list.append(contact)
+
+    def list_contact(self):
+        for contact in self.contact_list:
+            print(contact)
+
+    def dell_contact(self, num):
+        for contact in self.contact_list:
+            if num == contact.phone:
+                try:
+                    self.contact_list.remove(contact)
+                except ValueError:
+                    print('Ошибка! Запись не найдена.')
+
+    def search_contact(self, name, surname):
+        for contact in self.contact_list:
+            if surname == contact.surname and name == contact.name:
+                print(contact)
 
 
 def main():
-    pass
+    jhon = Contact('Jhon', 'Smith', '+71234567809')
+    jhon.set_additional_inf(telegram='@jhony', email='jhony@smith.com')
+    print(jhon)
 
 
 if __name__ == '__main__':
