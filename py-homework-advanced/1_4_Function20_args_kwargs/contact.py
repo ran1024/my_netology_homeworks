@@ -49,9 +49,9 @@ class PhoneBook(object):
         self.contact_dict[phone] = contact
 
     def list_contact(self):
-        result = '\n{0:-^64}'.format(self.name_phone_book)
-        for key in self.contact_dict:
-            result += self.contact_dict[key].__str__() + '\n'
+        result = ''
+        for val in self.contact_dict.values():
+            result += val.__str__() + '\n'
         return result
 
     def dell_contact(self, num):
@@ -70,3 +70,10 @@ class PhoneBook(object):
             if surname == val.surname and name == val.name:
                 contact = val
         return contact if contact else 'Контакт не найден.'
+
+    def search_elite_num(self):
+        result = ''
+        for val in self.contact_dict.values():
+            if val.elite != 'нет':
+                result += f'{val.elite} - {val.name} {val.surname}\n'
+        return result
