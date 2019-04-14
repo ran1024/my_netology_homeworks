@@ -49,7 +49,7 @@ class GoogleEmail:
             server.starttls()
             server.ehlo()
             server.login(self.user_email, self.password)
-            server.sendmail(self.user_email, recipients, msg.as_string())
+            server.sendmail(self.user_email, addr_to, msg.as_string())
         except Exception as err:
             return 1, f'ERROR: {err}'
         finally:
@@ -103,7 +103,7 @@ class GoogleEmail:
 
 def main():
     mail = GoogleEmail('ran1024440@gmail.com', 'Salmonella$@12')
-    err, result = mail.send_mail(['vasiapupkin@my_domen.ru'], 'Пример',
+    err, result = mail.send_mail('vasiapupkin@my_domen.ru', 'Пример',
                                   'Отправлено в целях тестирования.', 'Вася Пупкин')
     if err:
         print('Произошла ошибка при получении письма:')

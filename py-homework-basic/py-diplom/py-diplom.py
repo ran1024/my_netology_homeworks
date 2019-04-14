@@ -42,7 +42,7 @@ class UserVK:
             result = response.json()['response'][0]
             self.user_name = f"{result['first_name']} {result['last_name']}"
             self.user_id = userid
-            return 'user_name', self.user_name
+            return 'user_email', self.user_name
         except KeyError:
             return 'Error', 'Такого пользователя не существует! Для следующей попытки нажмите "Старт".'
         finally:
