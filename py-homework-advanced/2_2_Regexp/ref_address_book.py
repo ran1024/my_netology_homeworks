@@ -25,7 +25,7 @@ def main():
         (.+)?                           # email
         ''', re.VERBOSE)
     result_dict = {}
-    result_list = []
+    result_list = [['Фамилия', 'Имя', 'Отчество', 'Место работы', 'Должность', 'Телефон', 'Эл.почта']]
     for item in contacts_list:
         str_entry = ' '.join(item)
         # print(str_entry)
