@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# ref_address_book.py
+#
+# Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
+#
+import re
+import csv
+from pprint import pprint
+
+def main():
+    # читаем адресную книгу в формате CSV в список contacts_list
+    with open("phonebook_raw.csv") as fh:
+        rows = csv.reader(fh, delimiter=",")
+        contacts_list = list(rows)
+
+    # TODO 1: выполните пункты 1-3 ДЗ
+    p1 = re.compile(r'(\+?[7|8])\s?\(?(\d\d\d)\)?[-| ]?(\d+)[- ]?(\d\d)[- ]?(\d\d)\s+?\(?(доб\.)? ?(\d+)?\)?')
+    p2 = re.compile(r'''
+        ([А-Я]\w+)\s                    # фамилия
+        ([А-Я]\w+)\s                    # имя
+        ([А-Я]\w+)?\s+                  # отчество
+        ([А-Я]\w+)?\s+                  # место работы
+        ([\w\s-]*)(?![+])\s+            # должность
+        ([+\d\(\)\-]+\s(?:доб\.\d+)?)?  # телефон + добавочный если есть 
+        (.+)?                           # email
+        ''', re.VERBOSE)
+    result_dict = {}
+    result_list = []
+    for item in contacts_list:
+        str_entry = ' '.join(item)
+        # print(str_entry)
+        str_entry = p1.sub(r'+7(\2)\3-\4-\5 \6\7', str_entry)
+        m = p2.findall(str_entry)
+        if len(m):
+            ss = []
+            for i in m[0]:
+                aa = i.strip()
+                ss.append(aa)
+            if ss[0] in result_dict:
+                for i, var in enumerate(ss):
+                    if result_dict[ss[0]][i] == '':
+                        result_dict[ss[0]][i] = var
+            else:
+                result_dict[ss[0]] = ss
+                result_list.append(ss)
+
+    # TODO 2: сохраните получившиеся данные в другой файл
+    # код для записи файла в формате CSV
+    with open("phonebook.csv", "w") as fh:
+        datawriter = csv.writer(fh, delimiter=',')
+        datawriter.writerows(result_list)
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main())
