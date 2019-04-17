@@ -7,7 +7,6 @@
 #
 import re
 import csv
-from pprint import pprint
 
 def main():
     # читаем адресную книгу в формате CSV в список contacts_list
@@ -15,7 +14,6 @@ def main():
         rows = csv.reader(fh, delimiter=",")
         contacts_list = list(rows)
 
-    # TODO 1: выполните пункты 1-3 ДЗ
     p1 = re.compile(r'(\+?[7|8])\s?\(?(\d\d\d)\)?[-| ]?(\d+)[- ]?(\d\d)[- ]?(\d\d)\s+?\(?(доб\.)? ?(\d+)?\)?')
     p2 = re.compile(r'''
         ([А-Я]\w+)\s                    # фамилия
@@ -46,7 +44,6 @@ def main():
                 result_dict[ss[0]] = ss
                 result_list.append(ss)
 
-    # TODO 2: сохраните получившиеся данные в другой файл
     # код для записи файла в формате CSV
     with open("phonebook.csv", "w") as fh:
         datawriter = csv.writer(fh, delimiter=',')
