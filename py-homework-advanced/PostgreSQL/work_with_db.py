@@ -89,25 +89,43 @@ def add_student(conn, student):
                 return 1, err
 
 
-def get_student(student_id):
-    pass
+def get_student(conn, student_id):
+    with conn:
+        with conn.cursor() as curs:
+            try:
+                curs.execute('''SELECT s.id, s.name, s.birth, s.gpa, c.name FROM student s
+                            LEFT JOIN student_course sc ON sc.student_id = s.id
+                            LEFT JOIN course c ON c.id = sc.course_id
+                            WHERE s.id = %s
+                            ''', (student_id,))
+                return 0, curs.fetchall()
+            except psycopg2.Error as err:
+                return 1, err
 
 
 def main():
     try:
         conn = psycopg2.connect(dbname='testdb', user='testdb',
                                 password='Klevo982', host='localhost')
-        # create_db(conn)
-        # student = {'name': 'Ипап221', 'gpa': 0, 'birth': '1943-11-05'}
-        # result = add_student(conn, student)
-        # print(f'ERROR: {result[1]}') if result[0] else print('Запись успешно внесена в БД.')
+        # Создаём таблицы
+        create_db(conn)
 
-        # students = [{'name': 'Aавапв вава', 'gpa': 0, 'birth': '1990-02-24'},
-        #             {'name': 'Bbb уцуцу', 'gpa': 0, 'birth': '1990-02-24'}]
-        # result = add_students(conn, 2, students)
-        # print(f'ERROR: {result[1]}') if result[0] else print('Запись успешно внесена в БД.')
+        # Добавляем студента
+        student = {'name': 'Ипап221', 'gpa': 0, 'birth': '1943-11-05'}
+        result = add_student(conn, student)
+        print(f'ERROR: {result[1]}') if result[0] else print('Запись успешно внесена в БД.')
 
-        print(get_students(conn, 2))
+        # Добавляем студентов и записываем их на курс №2
+        students = [{'name': 'Aавапв вава', 'gpa': 0, 'birth': '1990-02-24'},
+                    {'name': 'Bbb уцуцу', 'gpa': 0, 'birth': '1990-02-24'}]
+        result = add_students(conn, 2, students)
+        print(f'ERROR: {result[1]}') if result[0] else print('Запись успешно внесена в БД.')
+
+        # Получаем студентов определённого курса
+        print(get_students(conn, 2)[1])
+
+        # Получаем все сведения о студенте
+        print(get_student(conn, 3)[1])
     finally:
         conn.close()
 
