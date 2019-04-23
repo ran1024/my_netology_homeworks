@@ -16,10 +16,11 @@ def create_db(conn):
     with conn:
         with conn.cursor() as curs:
             curs.execute('''CREATE TABLE IF NOT EXISTS student (
-                id      serial PRIMARY KEY,
-                name    character varying(100) UNIQUE NOT NULL,
+                id      serial,
+                name    character varying(100),
                 gpa     numeric(10, 2),
-                birth   timestamp with time zone);
+                birth   timestamp with time zone,
+                PRIMARY KEY (id, name));
             ''')
 
             curs.execute('''CREATE TABLE IF NOT EXISTS course (
