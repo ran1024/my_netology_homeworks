@@ -29,9 +29,10 @@ def create_db(conn):
             ''')
 
             curs.execute('''CREATE TABLE IF NOT EXISTS student_course (
-                id serial PRIMARY KEY,
                 student_id integer REFERENCES student(id) ON DELETE CASCADE,
-                course_id integer REFERENCES course(id) ON DELETE CASCADE);
+                course_id integer REFERENCES course(id) ON DELETE CASCADE,
+                grade integer,
+                PRIMARY KEY (student_id, course_id));
             ''')
 
 
