@@ -55,7 +55,8 @@ def find_with_sort(db, sort_by=None):
 
 def find_with_all(db, sort_by=None, name=None):
     """
-    Реализуем сортировку по произвольному ключу.
+    Реализуем сортировку по произвольному ключу и поиск
+    по имени исполнителя (в том числе – по подстроке).
     Эта функция универсальна и заменяет предыдущие две.
     """
     result = []
@@ -69,22 +70,44 @@ def find_with_all(db, sort_by=None, name=None):
     return result
 
 
+def find_by_date(db, start_date=False, end_date=False):
+    """
+    Найти все мероприятия с начальной по конечную дату.
+    """
+    result = []
+    for conc in db.find({'Дата': {'$lte': end_date, '$gte': start_date}}, {'_id': 0}).sort('Дата'):
+        conc['Дата'] = conc['Дата'].strftime("%d.%m.%Y")
+        result.append(conc)
+    return result
+
+
 def main():
     client = MongoClient()
     db = client.concerts
     artists = db.artists
+
     # Читаем csv из файла и пишем в базу MongoDB
     read_data('artists.csv', artists)
+
     # Получаем записи, отсортированные по цене.
     for i in find_with_all(artists, 'Цена'):
         print(i)
+
     print('\n')
     # Ищем билеты по имени исполнителя.
     for i in find_with_all(artists, name='Th'):
         print(i)
+
     print('\n')
     # Получаем записи, отсортированные по дате.
     for i in find_with_all(artists, 'Дата'):
+        print(i)
+
+    print('\n')
+    # Находим все мероприятия с 1 по 30 июля.
+    start_d = datetime(2019, 7, 1)
+    end_d = datetime(2019, 7, 30)
+    for i in find_by_date(artists, start_d, end_d):
         print(i)
 
 
