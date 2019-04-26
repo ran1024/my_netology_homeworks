@@ -26,26 +26,47 @@ def read_data(csv_file, db):
     db.insert_many(source_list)
 
 
-def find_cheapest(db):
-    """
-    Отсортировать билеты из базы по возрастания цены
-    Документация: https://docs.mongodb.com/manual/reference/method/cursor.sort/
-    """
-    result = []
-    for conc in db.find({}, {'_id': 0}).sort('Цена'):
-        conc['Дата'] = conc['Дата'].strftime("%d.%m.%Y")
-        result.append(conc)
-    return result
-
-
 def find_by_name(name, db):
     """
     Найти билеты по имени исполнителя (в том числе – по подстроке),
     и вернуть их по возрастанию цены
     """
+    pattern = re.escape(name)
+    regex = re.compile(pattern, re.IGNORECASE)
+    result = []
+    for conc in db.find({'Исполнитель': regex}, {'_id': 0}).sort('Цена'):
+        conc['Дата'] = conc['Дата'].strftime("%d.%m.%Y")
+        result.append(conc)
+    return result
 
-    regex = re.compile('укажите регулярное выражение для поиска. ' \
-                       'Обратите внимание, что в строке могут быть специальные символы, их нужно экранировать')
+
+def find_with_sort(db, sort_by=None):
+    """
+    Реализуем сортировку по произвольному ключу.
+    """
+    result = []
+    if not sort_by:
+        sort_by = '_id'
+    for conc in db.find({}, {'_id': 0}).sort(sort_by):
+        conc['Дата'] = conc['Дата'].strftime("%d.%m.%Y")
+        result.append(conc)
+    return result
+
+
+def find_with_all(db, sort_by=None, name=None):
+    """
+    Реализуем сортировку по произвольному ключу.
+    Эта функция универсальна и заменяет предыдущие две.
+    """
+    result = []
+    if not sort_by:
+        sort_by = '_id'
+    pattern = re.escape(name) if name else r'.*'
+    regex = re.compile(pattern, re.IGNORECASE)
+    for conc in db.find({'Исполнитель': regex}, {'_id': 0}).sort(sort_by):
+        conc['Дата'] = conc['Дата'].strftime("%d.%m.%Y")
+        result.append(conc)
+    return result
 
 
 def main():
@@ -53,9 +74,17 @@ def main():
     db = client.concerts
     artists = db.artists
     # Читаем csv из файла и пишем в базу MongoDB
-    # read_data('artists.csv', artists)
+    read_data('artists.csv', artists)
     # Получаем записи, отсортированные по цене.
-    for i in find_cheapest(artists):
+    for i in find_with_all(artists, 'Цена'):
+        print(i)
+    print('\n')
+    # Ищем билеты по имени исполнителя.
+    for i in find_with_all(artists, name='Th'):
+        print(i)
+    print('\n')
+    # Получаем записи, отсортированные по дате.
+    for i in find_with_all(artists, 'Дата'):
         print(i)
 
 
