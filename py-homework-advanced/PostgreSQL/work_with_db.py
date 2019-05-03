@@ -123,12 +123,51 @@ def add_student(conn, student):
         with conn.cursor() as curs:
             try:
                 curs.execute('''INSERT INTO student (name, gpa, birth)
-                            VALUES (%(name)s, %(gpa)s, %(birth)s)
-                            ON CONFLICT (name) DO NOTHING RETURNING id;
-                            ''', student)
+                    VALUES (%(name)s, %(gpa)s, %(birth)s) ON CONFLICT (name) DO NOTHING RETURNING id;
+                ''', student)
                 return 0, curs.fetchone()[0]
             except psycopg2.Error as err:
                 return 1, err
+
+
+def insert_student(cursor, student):
+    try:
+        cursor.execute('''INSERT INTO student (name, gpa, birth)
+            VALUES (%(name)s, %(gpa)s, %(birth)s) ON CONFLICT (name) DO NOTHING RETURNING id;
+        ''', student)
+        return 0, cursor.fetchone()[0]
+    except psycopg2.Error as err:
+        return 1, err
+
+
+# Третья версия создания студента.
+def add_student_3(conn, student):
+    with conn:
+        with conn.cursor() as curs:
+            insert_student(curs, student)
+
+
+def add_students_3(conn, course_id, students):
+    """
+    Создает студентов и записывает их на курс.
+    :param conn: коннект к базе данных
+    :param course_id: Integer - номер курса
+    :param students: Лист словарей параметров студентов.
+    :return:
+    """
+    with conn:
+        with conn.cursor() as curs:
+            for student in students:
+                err, student_id = insert_student(curs, student)
+                if err:
+                    return 1, student_id
+                try:
+                    curs.execute('''INSERT INTO student_course (course_id, student_id)
+                        VALUES (%s, %s)
+                    ''', (course_id, student_id))
+                except psycopg2.Error as err:
+                    return 1, err
+    return 0, 'Ok'
 
 
 def get_student(conn, student_id):
