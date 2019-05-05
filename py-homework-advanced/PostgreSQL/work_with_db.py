@@ -61,7 +61,7 @@ def insert_student(cursor, student):
         return 1, err
 
 
-# Третья версия создания студента.
+# Просто создаётся студент.
 def add_student(conn, student):
     with conn:
         with conn.cursor() as curs:
