@@ -29,7 +29,8 @@ def login_vk(token=None, login=None, password=None):
             raise KeyError('Не введен токен или логин-пароль')
         return vk_session.get_api()
     except Exception as e:
-        print(e)
+        print('Ошибка: ', e)
+        exit(code=1)
 
 
 def get_albums(vk, vk_tools):
@@ -53,7 +54,7 @@ def main():
             'токен авторизации.\n'
     login = input('Введите номер телефона: ')
     my_db = UseDB()
-    err, result = my_db.find_by_index('vkowners', {'login': login})
+    err, result = my_db.find_by_vkowners({'login': login})
     if not err and result['token']:
         vk = login_vk(token=result['token'])
     else:
@@ -61,20 +62,25 @@ def main():
         password = input('Введите токен или пароль: ')
         if len(password) > 50:
             vk = login_vk(token=password)
-            err, result = my_db.update_record('vkowners', )
         else:
             vk = login_vk(login=login, password=password)
+        if err:
+            result = vk.users.get(fields='interests, music, movies, books, screen_name')
+            owner_data = result[0]
+            owner_data.pop('is_closed', 0)
+            owner_data.pop('can_access_closed', 0)
+            owner_data['login'] = login
+            owner_data['token'] = password if len(password) > 50 else ''
+            result = my_db.vkowners.insert_one(owner_data)
+            print(owner_data)
+        elif len(password) > 50:
+            result = my_db.vkowners.update_one({'login': login}, {'$set': {'token': password}})
 
     account = vk.account.getProfileInfo()
     print(account)
     print('\n')
     vk_tools = vk_api.VkTools(vk)
-
-    owner_data = vk.users.get(fields='interests, music, movies, books, screen_name')
-    owner_data.pop('is_closed', 0)
-    owner_data.pop('can_access_closed', 0)
-    owner_data['token'] =
-    print(owner_data)
+    print(my_db.vkowners.find_one({'login': login}, {'_id': 0}))
 
 
 if __name__ == '__main__':
