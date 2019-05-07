@@ -6,44 +6,75 @@
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
 import vk_api
-from dbworker import UseDB
+from pymongo import MongoClient
+from dbworker import Vkinder
 
 
-API_VERSION = '5.92'
-APP_ID = 6888361
-ACCESS_TOKEN = '9d5ac9e2eccc65f99f474bd99ed9d5cbdb7c413cbaaf43a96ec20b7677a947be915ab4450feec3d160a53'
-# LOGIN = '+79241067661'
-# PASSWORD = 'smallbitmap982'
+class VkSession:
+
+    API_VERSION = '5.92'
+    APP_ID = 6888361
+
+    def __init__(self):
+        self.vk_session = None
+        self.vk = None
+        self.vk_tools = None
+
+    def login_vk(self, token=None, login=None, password=None):
+        """
+        Авторизация по токену или логин-паролю.
+        """
+        try:
+            if token:
+                self.vk_session = vk_api.VkApi(token=token, app_id=VkSession.APP_ID,
+                                               api_version=VkSession.API_VERSION)
+            elif login and password:
+                self.vk_session = vk_api.VkApi(login, password, api_version=VkSession.API_VERSION,
+                                               scope='friends,photos,audio,status,groups')
+                self.vk_session.auth(token_only=True, reauth=True)
+            else:
+                raise KeyError('Не введен токен или логин-пароль')
+            self.vk = self.vk_session.get_api()
+            self.vk_tools = vk_api.VkTools(self.vk_session)
+            return 0, 'ok'
+        except Exception as error_msg:
+            return 1, f'Ошибка: {error_msg}'
+
+    def get_albums(self):
+        albums = []
+        for album in self.vk.photos.getAlbums(need_system=1)['items']:
+            # получаем список фотографий из альбома
+            photos = self.vk_tools.get_all(values={'album_id': album['id'], 'photo_sizes': 1},
+                                           method='photos.get', max_count=3)
+            # добавляем название альбома и ссылки на каждую фотографию
+            albums.append({'name': album['title'], 'photos': [p['sizes'][-1]['url'] for p in photos['items']]})
+        return albums
 
 
-# авторизация по токену или логин-паролю
-def login_vk(token=None, login=None, password=None):
-    try:
-        if token:
-            vk_session = vk_api.VkApi(token=token, app_id=APP_ID, api_version=API_VERSION)
-        elif login and password:
-            vk_session = vk_api.VkApi(login, password, api_version=API_VERSION,
-                                      scope='friends,photos,audio,status,groups')
-            vk_session.auth(token_only=True, reauth=True)
-        else:
-            raise KeyError('Не введен токен или логин-пароль')
-        return vk_session.get_api()
-    except Exception as e:
-        print('Ошибка: ', e)
-        exit(code=1)
+def if_error(result):
+    if result[0]:
+        print('Произошла ошибка авторизации. Попробуйте ещё раз.')
+        print(result[1])
+        return 1
+    else:
+        return 0
 
 
-def get_albums(vk, vk_tools):
-    albums = []
-    for album in vk.photos.getAlbums(need_system=1)['items']:
-        # получаем список фотографий из альбома
-        photos = vk_tools.get_all(values={'album_id': album['id'], 'photo_sizes': 1}, method='photos.get', max_count=3)
-        # добавляем название альбома и ссылки на каждую фотографию
-        albums.append({'name': album['title'], 'photos': [p['sizes'][-1]['url'] for p in photos['items']]})
-    print(albums)
+def get_find_param():
+    print('Для поиска необходимо ввести несколько параметров.')
+    age_from = input('Введите минимальный возраст поиска: ')
+    age_to = input('Введите максимальный возраст поиска: ')
+    sex = input('Введите пол ("М". "Ж"): ')
+    sex = '1' if sex == 'М' else '2'
+    find_city = input('Введите город для поиска: ')
+    return [age_from, age_to, sex, find_city]
 
 
 def main():
+    connect = MongoClient()
+    db = connect.vkinder
+    vkinder = Vkinder(db)
+    vk_session = VkSession()
     text1 = '\nДля продолжения введите свой пароль в VK или Access Token, ' \
             'Рекомендуется получить Access Token. Для этого нужно перейти по ссылке:' \
             'https://oauth.vk.com/authorize?client_id=6888361&display=page' \
@@ -52,35 +83,29 @@ def main():
             '\nАвторизоваться ВКонтакте и в открывшемся окне прочитать какие разрешения запрашивает ' \
             'это приложение, выдать приложению доступ, и из адресной строки следующего окна скопировать ' \
             'токен авторизации.\n'
-    login = input('Введите номер телефона: ')
-    my_db = UseDB()
-    err, result = my_db.find_by_vkowners({'login': login})
-    if not err and result['token']:
-        vk = login_vk(token=result['token'])
-    else:
-        print(text1)
-        password = input('Введите токен или пароль: ')
-        if len(password) > 50:
-            vk = login_vk(token=password)
+    session_ok = 1
+    while session_ok:
+        login = input('Введите номер телефона: ')
+        result = vkinder.find_vkinder(login)
+        if not result[0] and result[1]:
+            res = vk_session.login_vk(token=result[1])
+            session_ok = if_error(res)
         else:
-            vk = login_vk(login=login, password=password)
-        if err:
-            result = vk.users.get(fields='interests, music, movies, books, screen_name')
-            owner_data = result[0]
-            owner_data.pop('is_closed', 0)
-            owner_data.pop('can_access_closed', 0)
-            owner_data['login'] = login
-            owner_data['token'] = password if len(password) > 50 else ''
-            result = my_db.vkowners.insert_one(owner_data)
-            print(owner_data)
-        elif len(password) > 50:
-            result = my_db.vkowners.update_one({'login': login}, {'$set': {'token': password}})
+            print(text1)
+            password = input('Введите токен или пароль: ')
+            if len(password) > 50:
+                vkinder.token = password
+                res = vk_session.login_vk(token=password)
+            else:
+                res = vk_session.login_vk(login=login, password=password)
+            session_ok = if_error(res)
+        if not session_ok:
+            vkinder.update_user(login, vk_session.vk)
+            print('Это класс Vkinder:\n', vkinder)
 
-    account = vk.account.getProfileInfo()
-    print(account)
-    print('\n')
-    vk_tools = vk_api.VkTools(vk)
-    print(my_db.vkowners.find_one({'login': login}, {'_id': 0}))
+    # account = vk.account.getProfileInfo()
+    # vk_tools = vk_api.VkTools(vk)
+    # print(my_db.vkowners.find_one({'login': login}, {'_id': 0}))
 
 
 if __name__ == '__main__':
