@@ -29,6 +29,7 @@ class Vkinder:
         self.token = ''
         self.login = ''
         self.city = {}
+        self.offset = 0
 
     def __str__(self):
         return f'{{\n\tid: {self.id},\n\tfirst_name: {self.first_name}\n\tlast_name: {self.last_name}\n\t' \
@@ -56,6 +57,7 @@ class Vkinder:
             self.token = result['token']
             self.login = result['login']
             self.city = result['city']
+            self.offset = result['offset']
             if 'age_min' in result:
                 self.age_min = result['age_min']
                 self.age_max = result['age_max']
@@ -87,6 +89,7 @@ class Vkinder:
         Метод обновляет параметры поиска в базе данных и в экземпляре класса.
         """
         data['age_current'] = self.age_current
+        data['offset'] = 0
         result = self.vkinder.update({'id': self.id}, {'$set': data}, upsert=False)
         self.find_vkinder(self.login)
         return result

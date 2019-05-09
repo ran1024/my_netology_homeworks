@@ -119,7 +119,7 @@ def user_login(vkinder, vk_connect):
             vkinder.update_user(login, vk_connect.vk)
 
 
-def users_search(vkinder, vk_connect, offset):
+def users_search(vkinder, vk_connect):
     fields = 'relation, photo_max_orig, is_friend, common_count, occupation, interests, music, movies, books'
     relation = {0: 'не указано',
                 1: 'в браке не состоит',
@@ -131,7 +131,7 @@ def users_search(vkinder, vk_connect, offset):
                 7: 'влюблён / влюблена',
                 8: 'в гражданском браке'}
     users = []
-    result = vk_connect.vk.users.search(offset=offset, count=10, city=vkinder.find_city['id'],
+    result = vk_connect.vk.users.search(offset=vkinder.offset, count=10, city=vkinder.find_city['id'],
                                         country=1, sex=vkinder.find_sex, age_from=vkinder.age_min,
                                         age_to=vkinder.age_max, has_photo=1, fields=fields)
     if not result['count']:
@@ -139,7 +139,8 @@ def users_search(vkinder, vk_connect, offset):
 
     for item in result['items']:
         item_dict = {'Реципиент': f'{item["first_name"]} {item["last_name"]}',
-                     'Фотография': item['photo_max_orig']}
+                     'Фотография': item['photo_max_orig'],
+                     'Адрес в ВК': f'https://vk.com/id{item["id"]}'}
         if 'relation' in item and item['relation'] in [0, 1, 2, 5, 6, 7]:
             item_dict['Семейное положение'] = relation[item['relation']]
         else:
@@ -154,37 +155,67 @@ def users_search(vkinder, vk_connect, offset):
         item_dict['Является ли Вашим другом'] = 'да' if item['is_friend'] else 'нет'
         item_dict['Количество общих друзей'] = item['common_count']
         users.append(item_dict)
+        vkinder.offset += 10
     return users
 
 
-def main():
-    connect = MongoClient()
-    db = connect.vkinder
-    vkinder = Vkinder(db)
-    vk_connect = VkSession()
-    user_login(vkinder, vk_connect)
-    result = 1
-    while result:
-        result = get_find_params(vkinder,vk_connect)
-        if result:
-            print('\nБыли введены неправильные параметры! Попробуйте ещё раз.\n')
-
-    print('\nЭто класс Vkinder:\n', vkinder)
-
+def begin_search(vkinder, vk_connect):
     print(f'\nОсуществляется поиск. Параметры:\nГод рождения: {vkinder.age_current}\n'
           f'Пол: {vkinder.find_sex} (1-женский, 2-мужской)\n'
           f'Город: {vkinder.find_city["title"]}\nИнтересы: {vkinder.find_interests}\n')
-    offset = 0
-    users = users_search(vkinder, vk_connect, offset)
-    print(users, '\n')
+    users = users_search(vkinder, vk_connect)
+
+    print('\nЭто класс Vkinder:\n', vkinder)
+
     if users:
         for user in users:
             for key, val in user.items():
                 print(f'{key}: {val}')
             print('\n')
-    # account = vk.account.getProfileInfo()
-    # vk_tools = vk_api.VkTools(vk)
-    # print(my_db.vkowners.find_one({'login': login}, {'_id': 0}))
+    else:
+        print('С такими параметрами ничего не найдено.')
+
+
+def new_search(vkinder, vk_connect):
+    result = 1
+    while result:
+        result = get_find_params(vkinder, vk_connect)
+        if result:
+            print('\nБыли введены неправильные параметры! Попробуйте ещё раз.\n')
+    begin_search(vkinder, vk_connect)
+
+
+def next_search():
+    pass
+
+
+def main():
+    functions = dict(new=new_search, next=next_search, quit=sys.exit())
+    connect = MongoClient()
+    db = connect.vkinder
+    vkinder = Vkinder(db)
+    vk_connect = VkSession()
+    user_login(vkinder, vk_connect)
+
+    if vkinder.age_current:
+        print(f'Прошлые параметры поиска:\n'
+              f'Год рождения: {vkinder.age_current}\n'
+              f'Пол: {vkinder.find_sex} (1-женский, 2-мужской)\n'
+              f'Город: {vkinder.find_city["title"]}\n'
+              f'Интересы: {vkinder.find_interests}\n')
+        answer = input('Продолжить поиск с этими параметрами? (Y / N): ').lower()
+        if answer == 'y':
+            begin_search(vkinder, vk_connect)
+
+    new_search(vkinder, vk_connect)
+
+    print('Введите команду: new - новый поиск, next - искать дальше, quit - выход из программы')
+    while True:
+        comm = input('Ввод: ')
+        if comm in functions:
+            functions[comm](vkinder, vk_connect)
+        else:
+            print('Введена недопустимая команда!')
 
 
 if __name__ == '__main__':
