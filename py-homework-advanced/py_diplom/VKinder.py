@@ -76,6 +76,9 @@ def get_find_params(vkinder, vk_connect):
     city_title = input('Введите город для поиска: ')
     if city_title:
         result = vk_connect.vk.database.getCities(country_id=1, q=city_title, need_all=0, count=1)
+        # Если был введён некорректный населённый пункт:
+        if not result['count']:
+            return 1
         find_city = result['items'][0]
     else:
         find_city = vkinder.city
@@ -116,6 +119,44 @@ def user_login(vkinder, vk_connect):
             vkinder.update_user(login, vk_connect.vk)
 
 
+def users_search(vkinder, vk_connect, offset):
+    fields = 'relation, photo_max_orig, is_friend, common_count, occupation, interests, music, movies, books'
+    relation = {0: 'не указано',
+                1: 'в браке не состоит',
+                2: 'есть друг или подруга',
+                3: 'помолвлен / помолвлена',
+                4: 'состоит в браке',
+                5: 'всё сложно',
+                6: 'в активном поиске',
+                7: 'влюблён / влюблена',
+                8: 'в гражданском браке'}
+    users = []
+    result = vk_connect.vk.users.search(offset=offset, count=10, city=vkinder.find_city['id'],
+                                        country=1, sex=vkinder.find_sex, age_from=vkinder.age_min,
+                                        age_to=vkinder.age_max, has_photo=1, fields=fields)
+    if not result['count']:
+        return users
+
+    for item in result['items']:
+        item_dict = {'Реципиент': f'{item["first_name"]} {item["last_name"]}',
+                     'Фотография': item['photo_max_orig']}
+        if 'relation' in item and item['relation'] in [0, 1, 2, 5, 6, 7]:
+            item_dict['Семейное положение'] = relation[item['relation']]
+        else:
+            item_dict['Семейное положение'] = 'не указано'
+        if 'occupation' in item:
+            if item['occupation']['type'] == 'university':
+                item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
+            elif item['occupation']['type'] == 'work':
+                item_dict['Работает в'] = item['occupation']['name']
+            elif item['occupation']['type'] == 'school':
+                item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
+        item_dict['Является ли Вашим другом'] = 'да' if item['is_friend'] else 'нет'
+        item_dict['Количество общих друзей'] = item['common_count']
+        users.append(item_dict)
+    return users
+
+
 def main():
     connect = MongoClient()
     db = connect.vkinder
@@ -125,10 +166,22 @@ def main():
     result = 1
     while result:
         result = get_find_params(vkinder,vk_connect)
-        print('\nБыли введены неправильные параметры! Попробуйте ещё раз.\n')
+        if result:
+            print('\nБыли введены неправильные параметры! Попробуйте ещё раз.\n')
 
     print('\nЭто класс Vkinder:\n', vkinder)
 
+    print(f'\nОсуществляется поиск. Параметры:\nГод рождения: {vkinder.age_current}\n'
+          f'Пол: {vkinder.find_sex} (1-женский, 2-мужской)\n'
+          f'Город: {vkinder.find_city["title"]}\nИнтересы: {vkinder.find_interests}\n')
+    offset = 0
+    users = users_search(vkinder, vk_connect, offset)
+    print(users, '\n')
+    if users:
+        for user in users:
+            for key, val in user.items():
+                print(f'{key}: {val}')
+            print('\n')
     # account = vk.account.getProfileInfo()
     # vk_tools = vk_api.VkTools(vk)
     # print(my_db.vkowners.find_one({'login': login}, {'_id': 0}))
