@@ -137,58 +137,76 @@ def users_search(vkinder, vk_connect):
         8: (0, 'в гражданском браке')
     }
     users = {}
-    while len(users) < 10:
-        result = vk_connect.vk.users.search(offset=vkinder.offset, count=100, city=vkinder.find_city['id'],
-                                            country=1, sex=vkinder.find_sex, age_from=vkinder.age_min,
-                                            age_to=vkinder.age_max, has_photo=1, fields=fields)
-        if not result['count']:
-            return users
-
-        for item in result['items']:
-            rating = 0
-            item_dict = {
-                'Реципиент': f'{item["first_name"]} {item["last_name"]}',
-                'Фотография': item['photo_max_orig'],
-                'Адрес в ВК': f'https://vk.com/id{item["id"]}',
-            }
-            if 'relation' in item and item['relation'] in [1, 2, 5, 6, 7]:
-                item_dict['Семейное положение'] = relation[item['relation']][1]
-                rating += relation[item['relation']][0]
-            else:
-                continue
-            if 'occupation' in item:
-                if item['occupation']['type'] == 'university':
-                    item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
-                elif item['occupation']['type'] == 'work':
-                    item_dict['Работает в'] = item['occupation']['name']
-                elif item['occupation']['type'] == 'school':
-                    item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
-            if item['is_friend']:
-                item_dict['Является ли Вашим другом'] = 'да'
-                rating += 5
-            else:
-                item_dict['Является ли Вашим другом'] = 'нет'
-            if item['common_count']:
-                rating += item['common_count']
-            item_dict['Количество общих друзей'] = item['common_count']
-
-            item_dict['rating'] = rating
-            users[item['id']] = item_dict
-        vkinder.offset += 100
-    # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
-    groups, errors = vk_api.vk_request_one_param_pool(
+    result, errors = vk_api.vk_request_one_param_pool(
         vk_connect.vk_session,
-        'groups.get',   # Метод
-        key='user_id',  # Изменяющийся параметр
-        values=list(users.keys()),
-        default_values={'count': 1000}
+        'users.search',  # Метод
+        key='status',  # Изменяющийся параметр
+        values=[5],
+        default_values={
+            'count': 1000,
+            'city': vkinder.find_city['id'],
+            'country': 1,
+            'sex': vkinder.find_sex,
+            'age_from': vkinder.age_min,
+            'age_to': vkinder.age_max,
+            'has_photo': 1,
+            'fields': fields
+        }
     )
-    if not len(errors):
-        for key, value in groups.items():
-            user_groups = set(value['items'])
-            user_groups &= vkinder.groups
-            users[key]['rating'] += len(user_groups)
-            users[key]['Количество общих групп: '] = len(user_groups)
+    print(errors)
+    print(result, '\n')
+    for key in result:
+        print(f'{key} - {result[key]["count"]}')
+    print(f'По данному запросу найдено {result[5]["count"]} совпадений.\n')
+
+    for item in result[5]['items']:
+        # Отсеиваем полностью закрытые профили.
+        if item['is_closed'] and not item['can_access_closed']:
+            continue
+
+        rating = 0
+        item_dict = {
+            'Реципиент': f'{item["first_name"]} {item["last_name"]}',
+            'Фотография': item['photo_max_orig'],
+            'Адрес в ВК': f'https://vk.com/id{item["id"]}',
+        }
+        if 'relation' in item:
+            item_dict['Семейное положение'] = relation[item['relation']][1]
+            rating += relation[item['relation']][0]
+        if 'occupation' in item:
+            if item['occupation']['type'] == 'university':
+                item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
+            elif item['occupation']['type'] == 'work':
+                item_dict['Работает в'] = item['occupation']['name']
+            elif item['occupation']['type'] == 'school':
+                item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
+        if item['is_friend']:
+            item_dict['Является ли Вашим другом'] = 'да'
+            rating += 5
+        else:
+            item_dict['Является ли Вашим другом'] = 'нет'
+        if item['common_count']:
+            rating += item['common_count']
+        item_dict['Количество общих друзей'] = item['common_count']
+
+        item_dict['rating'] = rating
+        users[item['id']] = item_dict
+
+    # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
+    # groups, errors = vk_api.vk_request_one_param_pool(
+    #     vk_connect.vk_session,
+    #     'groups.get',   # Метод
+    #     key='user_id',  # Изменяющийся параметр
+    #     values=list(users.keys()),
+    #     default_values={'count': 1000}
+    # )
+    # if not len(errors):
+    #     for key, value in groups.items():
+    #         user_groups = set(value['items'])
+    #         user_groups &= vkinder.groups
+    #         users[key]['rating'] += len(user_groups)
+    #         users[key]['Количество общих групп: '] = len(user_groups)
+
     # Обновляем базу реципиентов, а в таблицу vkinder заносим offset.
     vkinder.update_vkusers()
     # Сортируем список реципиентов по рейтингу.
@@ -212,6 +230,7 @@ def begin_search(vkinder, vk_connect):
             print('\n')
     else:
         print('С такими параметрами ничего не найдено.')
+    print('\n', len(users))
 
 
 def new_search(vkinder, vk_connect):
