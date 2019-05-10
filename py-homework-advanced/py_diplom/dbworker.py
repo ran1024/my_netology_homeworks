@@ -5,7 +5,6 @@
 #
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
-from datetime import datetime
 
 
 class Vkinder:
@@ -20,6 +19,7 @@ class Vkinder:
         self.music = []
         self.movies = []
         self.books = []
+        self.groups = set()
         self.age_min = 0
         self.age_max = 0
         self.find_sex = ''
@@ -35,14 +35,15 @@ class Vkinder:
         return f'{{\n\tid: {self.id},\n\tfirst_name: {self.first_name}\n\tlast_name: {self.last_name}\n\t' \
             f'screen_name: {self.screen_name}\n\tlogin: {self.login}\n\tcity: {self.city}\n\t' \
             f'interests: {self.interests}\n\tmusic: {self.music}\n\tmovies: {self.movies}\n\t' \
-            f'books: {self.books}\n\ttoken: {self.token}\n\tage_min: {self.age_min}\n\t' \
-            f'age_max: {self.age_max}\n\tage_current: {self.age_current}\n\tfind_sex: {self.find_sex}\n\t' \
-            f'find_city: {self.find_city}\n\tfind_interests: {self.find_interests}\n }}'
+            f'books: {self.books}\n\tgroups: {self.groups}\n\ttoken: {self.token}\n\t' \
+            f'age_min: {self.age_min}\n\tage_max: {self.age_max}\n\tage_current: {self.age_current}\n\t' \
+            f'find_sex: {self.find_sex}\n\tfind_city: {self.find_city}\n\t' \
+            f'find_interests: {self.find_interests}\n\toffset: {self.offset} }}'
 
     def find_vkinder(self, login):
         """
         Метод производит поиск пользователя в БД. Если пользователь уже зарегистрирован в приложении,
-        произходит заполнение атрибутов класса.
+        происходит заполнение атрибутов класса.
         """
         result = self.vkinder.find_one({'login': login})
         if result:
@@ -57,7 +58,7 @@ class Vkinder:
             self.token = result['token']
             self.login = result['login']
             self.city = result['city']
-            self.offset = result['offset']
+            self.groups = set(result['groups'])
             if 'age_min' in result:
                 self.age_min = result['age_min']
                 self.age_max = result['age_max']
@@ -65,6 +66,7 @@ class Vkinder:
                 self.find_city = result['find_city']
                 self.age_current = result['age_current']
                 self.find_interests = result['find_interests']
+                self.offset = result['offset']
             return 0, self.token
         else:
             return 1, 'Пользователь не найден.'
@@ -81,6 +83,8 @@ class Vkinder:
         user.pop('can_access_closed', 0)
         user['login'] = login
         user['token'] = self.token
+        result = vk.groups.get(user_id=user['id'])
+        user['groups'] = result['items']
         self.vkinder.update({'login': login}, {'$set': user}, upsert=True)
         self.find_vkinder(login)
 
@@ -93,6 +97,9 @@ class Vkinder:
         result = self.vkinder.update({'id': self.id}, {'$set': data}, upsert=False)
         self.find_vkinder(self.login)
         return result
+
+    def update_vkusers(self):
+        self.vkinder.update({'id': self.id}, {'$set': {'offset': self.offset}}, upsert=False)
 
 
 if __name__ == '__main__':

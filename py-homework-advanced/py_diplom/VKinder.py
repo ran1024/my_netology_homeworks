@@ -120,56 +120,94 @@ def user_login(vkinder, vk_connect):
 
 
 def users_search(vkinder, vk_connect):
+    """
+    Функция производит поиск в 'ВК', подсчитывает рейтинг каждой записи и сортирует записи по рейтигу.
+    Получает группы всех реципиентов и находит количество общих с данным пользователем.
+    """
     fields = 'relation, photo_max_orig, is_friend, common_count, occupation, interests, music, movies, books'
-    relation = {0: 'не указано',
-                1: 'в браке не состоит',
-                2: 'есть друг или подруга',
-                3: 'помолвлен / помолвлена',
-                4: 'состоит в браке',
-                5: 'всё сложно',
-                6: 'в активном поиске',
-                7: 'влюблён / влюблена',
-                8: 'в гражданском браке'}
-    users = []
-    result = vk_connect.vk.users.search(offset=vkinder.offset, count=10, city=vkinder.find_city['id'],
-                                        country=1, sex=vkinder.find_sex, age_from=vkinder.age_min,
-                                        age_to=vkinder.age_max, has_photo=1, fields=fields)
-    if not result['count']:
-        return users
+    relation = {
+        0: (1, 'не указано'),
+        1: (4, 'в браке не состоит'),
+        2: (2, 'есть друг или подруга'),
+        3: (1, 'помолвлен / помолвлена'),
+        4: (0, 'состоит в браке'),
+        5: (3, 'всё сложно'),
+        6: (5, 'в активном поиске'),
+        7: (2, 'влюблён / влюблена'),
+        8: (0, 'в гражданском браке')
+    }
+    users = {}
+    while len(users) < 10:
+        result = vk_connect.vk.users.search(offset=vkinder.offset, count=100, city=vkinder.find_city['id'],
+                                            country=1, sex=vkinder.find_sex, age_from=vkinder.age_min,
+                                            age_to=vkinder.age_max, has_photo=1, fields=fields)
+        if not result['count']:
+            return users
 
-    for item in result['items']:
-        item_dict = {'Реципиент': f'{item["first_name"]} {item["last_name"]}',
-                     'Фотография': item['photo_max_orig'],
-                     'Адрес в ВК': f'https://vk.com/id{item["id"]}'}
-        if 'relation' in item and item['relation'] in [0, 1, 2, 5, 6, 7]:
-            item_dict['Семейное положение'] = relation[item['relation']]
-        else:
-            item_dict['Семейное положение'] = 'не указано'
-        if 'occupation' in item:
-            if item['occupation']['type'] == 'university':
-                item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
-            elif item['occupation']['type'] == 'work':
-                item_dict['Работает в'] = item['occupation']['name']
-            elif item['occupation']['type'] == 'school':
-                item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
-        item_dict['Является ли Вашим другом'] = 'да' if item['is_friend'] else 'нет'
-        item_dict['Количество общих друзей'] = item['common_count']
-        users.append(item_dict)
-        vkinder.offset += 10
-    return users
+        for item in result['items']:
+            rating = 0
+            item_dict = {
+                'Реципиент': f'{item["first_name"]} {item["last_name"]}',
+                'Фотография': item['photo_max_orig'],
+                'Адрес в ВК': f'https://vk.com/id{item["id"]}',
+            }
+            if 'relation' in item and item['relation'] in [1, 2, 5, 6, 7]:
+                item_dict['Семейное положение'] = relation[item['relation']][1]
+                rating += relation[item['relation']][0]
+            else:
+                continue
+            if 'occupation' in item:
+                if item['occupation']['type'] == 'university':
+                    item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
+                elif item['occupation']['type'] == 'work':
+                    item_dict['Работает в'] = item['occupation']['name']
+                elif item['occupation']['type'] == 'school':
+                    item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
+            if item['is_friend']:
+                item_dict['Является ли Вашим другом'] = 'да'
+                rating += 5
+            else:
+                item_dict['Является ли Вашим другом'] = 'нет'
+            if item['common_count']:
+                rating += item['common_count']
+            item_dict['Количество общих друзей'] = item['common_count']
+
+            item_dict['rating'] = rating
+            users[item['id']] = item_dict
+        vkinder.offset += 100
+    # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
+    groups, errors = vk_api.vk_request_one_param_pool(
+        vk_connect.vk_session,
+        'groups.get',   # Метод
+        key='user_id',  # Изменяющийся параметр
+        values=list(users.keys()),
+        default_values={'count': 1000}
+    )
+    if not len(errors):
+        for key, value in groups.items():
+            user_groups = set(value['items'])
+            user_groups &= vkinder.groups
+            users[key]['rating'] += len(user_groups)
+            users[key]['Количество общих групп: '] = len(user_groups)
+    # Обновляем базу реципиентов, а в таблицу vkinder заносим offset.
+    vkinder.update_vkusers()
+    # Сортируем список реципиентов по рейтингу.
+    return sorted(users.values(), key=lambda x: x['rating'], reverse=True)
 
 
 def begin_search(vkinder, vk_connect):
-    print(f'\nОсуществляется поиск. Параметры:\nГод рождения: {vkinder.age_current}\n'
-          f'Пол: {vkinder.find_sex} (1-женский, 2-мужской)\n'
-          f'Город: {vkinder.find_city["title"]}\nИнтересы: {vkinder.find_interests}\n')
+    print(f'Параметры:\nГод рождения: {vkinder.age_min} - {vkinder.age_max}')
+    sex = 'женский' if vkinder.find_sex == 1 else 'мужской'
+    print(f'Пол: {sex}\n'
+          f'Город: {vkinder.find_city["title"]}\n'
+          f'Интересы: {vkinder.find_interests}\n')
     users = users_search(vkinder, vk_connect)
-
-    print('\nЭто класс Vkinder:\n', vkinder)
 
     if users:
         for user in users:
             for key, val in user.items():
+                if key == 'id':
+                    continue
                 print(f'{key}: {val}')
             print('\n')
     else:
@@ -182,38 +220,43 @@ def new_search(vkinder, vk_connect):
         result = get_find_params(vkinder, vk_connect)
         if result:
             print('\nБыли введены неправильные параметры! Попробуйте ещё раз.\n')
+    print('\nПроизводится поиск.')
     begin_search(vkinder, vk_connect)
 
 
-def next_search():
-    pass
+def next_search(vkinder, vk_connect):
+    print('\nПродолжается поиск.')
+    begin_search(vkinder, vk_connect)
 
 
 def main():
-    functions = dict(new=new_search, next=next_search, quit=sys.exit())
+    functions = dict(new=new_search, next=next_search)
     connect = MongoClient()
     db = connect.vkinder
     vkinder = Vkinder(db)
     vk_connect = VkSession()
     user_login(vkinder, vk_connect)
 
-    if vkinder.age_current:
-        print(f'Прошлые параметры поиска:\n'
-              f'Год рождения: {vkinder.age_current}\n'
-              f'Пол: {vkinder.find_sex} (1-женский, 2-мужской)\n'
+    if vkinder.age_min:
+        print(f'\nПрошлые параметры поиска:\n'
+              f'Год рождения: {vkinder.age_min} - {vkinder.age_max}')
+        sex = 'женский' if vkinder.find_sex == 1 else 'мужской'
+        print(f'Пол: {sex}\n'
               f'Город: {vkinder.find_city["title"]}\n'
               f'Интересы: {vkinder.find_interests}\n')
         answer = input('Продолжить поиск с этими параметрами? (Y / N): ').lower()
         if answer == 'y':
             begin_search(vkinder, vk_connect)
+    else:
+        new_search(vkinder, vk_connect)
 
-    new_search(vkinder, vk_connect)
-
-    print('Введите команду: new - новый поиск, next - искать дальше, quit - выход из программы')
     while True:
+        print('Введите команду: new - новый поиск, next - искать дальше, quit - выход из программы')
         comm = input('Ввод: ')
         if comm in functions:
             functions[comm](vkinder, vk_connect)
+        elif comm == 'quit':
+            break
         else:
             print('Введена недопустимая команда!')
 
