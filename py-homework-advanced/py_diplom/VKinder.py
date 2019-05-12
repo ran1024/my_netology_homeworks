@@ -6,6 +6,8 @@
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
 import vk_api
+from time import sleep
+from datetime import date
 from pymongo import MongoClient
 from dbworker import Vkinder
 
@@ -40,14 +42,25 @@ class VkSession:
         except Exception as error_msg:
             return 1, f'Ошибка: {error_msg}'
 
-    def get_albums(self):
+    def get_albums(self, user_id):
+        """
+        Получаем фотографии из всех альбомов для заданного реципиента, сортируем по рейтингу
+        и выводим по топ-3 фото из каждого альбома.
+        """
         albums = []
-        for album in self.vk.photos.getAlbums(need_system=1)['items']:
+        for album in self.vk.photos.getAlbums(owner_id=user_id, need_system=1)['items']:
             # получаем список фотографий из альбома
-            photos = self.vk_tools.get_all(values={'album_id': album['id'], 'photo_sizes': 1},
+            photos = self.vk_tools.get_all(values={'owner_id': user_id, 'album_id': album['id'],
+                                                   'photo_sizes': 1, 'extended': 1},
                                            method='photos.get', max_count=3)
             # добавляем название альбома и ссылки на каждую фотографию
-            albums.append({'name': album['title'], 'photos': [p['sizes'][-1]['url'] for p in photos['items']]})
+            a1 = [(p['sizes'][-1]['url'], p["likes"]["count"]) for p in photos['items']]
+            albums.append(sorted(a1, key=lambda x: x[1], reverse=True)[:3])
+
+            # А вот тут выводятся все фотографии c лайками:
+            # albums.append({'name': album['title'],
+            #                'photos': [(p['sizes'][-1]['url'],
+            #                           f'лайков:{p["likes"]["count"]}') for p in photos['items']]})
         return albums
 
 
@@ -57,37 +70,6 @@ def if_error(result):
         return 1
     else:
         return 0
-
-
-def get_find_params(vkinder, vk_connect):
-    """
-    Получаем от пользователя необходимые параметры для поиска.
-    """
-    print('Для поиска необходимо ввести несколько параметров.')
-    try:
-        age_min = int(input('Введите минимальный возраст поиска: '))
-        age_max = int(input('Введите максимальный возраст поиска: '))
-        sex_variant = {'м': 2, 'ж': 1}
-        sex = input('Введите пол ("М". "Ж"): ').lower()
-        sex = sex_variant[sex]
-    except (ValueError, KeyError):
-        return 1
-
-    city_title = input('Введите город для поиска: ')
-    if city_title:
-        result = vk_connect.vk.database.getCities(country_id=1, q=city_title, need_all=0, count=1)
-        # Если был введён некорректный населённый пункт:
-        if not result['count']:
-            return 1
-        find_city = result['items'][0]
-    else:
-        find_city = vkinder.city
-    interests = input('Введите желаемые интересы через запятую: ').split(',')
-
-    find_data = {'age_min': age_min, 'age_max': age_max, 'find_sex': sex,
-                 'find_city': find_city, 'find_interests': interests}
-    vkinder.update_find_params(find_data)
-    return 0
 
 
 def user_login(vkinder, vk_connect):
@@ -119,10 +101,50 @@ def user_login(vkinder, vk_connect):
             vkinder.update_user(login, vk_connect.vk)
 
 
+def get_find_params(vkinder, vk_connect):
+    """
+    Получаем от пользователя необходимые параметры для поиска.
+    """
+    print('Для поиска необходимо ввести несколько параметров.')
+    try:
+        age_min = int(input('Введите минимальный возраст поиска: '))
+        age_max = int(input('Введите максимальный возраст поиска: '))
+        sex_variant = {'м': 2, 'ж': 1}
+        sex = input('Введите пол ("М". "Ж"): ').lower()
+        sex = sex_variant[sex]
+    except (ValueError, KeyError):
+        return 1
+
+    city_title = input('Введите город для поиска: ')
+    if city_title:
+        result = vk_connect.vk.database.getCities(country_id=1, q=city_title, need_all=0, count=1)
+        # Если был введён некорректный населённый пункт:
+        if not result['count']:
+            return 1
+        find_city = result['items'][0]
+    else:
+        find_city = vkinder.city
+    interests = input('Введите желаемые интересы через запятую: ').split(',')
+
+    year = date.today().year
+    if age_max <= age_min:
+        age_min = age_max = year - age_min
+    else:
+        age_min = year - age_min
+        age_max = year - age_max
+
+    vkinder.age_current = [1, 1]
+    find_data = {'age_min': age_min, 'age_max': age_max,
+                 'find_sex': sex, 'find_city': find_city, 'find_interests': interests}
+    vkinder.update_find_params(find_data)
+    return 0
+
+
 def users_search(vkinder, vk_connect):
     """
-    Функция производит поиск в 'ВК', подсчитывает рейтинг каждой записи и сортирует записи по рейтигу.
-    Получает группы всех реципиентов и находит количество общих с данным пользователем.
+    Функция производит поиск в 'ВК', получает группы всех реципиентов и
+    находит количество общих с данным пользователем. Затем подсчитывает
+    рейтинг каждой записи и сортирует записи по рейтигу.
     """
     fields = 'relation, photo_max_orig, is_friend, common_count, occupation, interests, music, movies, books'
     relation = {
@@ -140,77 +162,95 @@ def users_search(vkinder, vk_connect):
     result, errors = vk_api.vk_request_one_param_pool(
         vk_connect.vk_session,
         'users.search',  # Метод
-        key='status',  # Изменяющийся параметр
-        values=[5],
+        key='status',    # Изменяющийся параметр
+        values=[1, 2, 5, 6],
         default_values={
             'count': 1000,
             'city': vkinder.find_city['id'],
             'country': 1,
             'sex': vkinder.find_sex,
-            'age_from': vkinder.age_min,
-            'age_to': vkinder.age_max,
+            'birth_day': vkinder.age_current[0],
+            'birth_month': vkinder.age_current[1],
+            'birth_year': vkinder.age_min,
             'has_photo': 1,
             'fields': fields
         }
     )
-    print(errors)
-    print(result, '\n')
-    for key in result:
-        print(f'{key} - {result[key]["count"]}')
-    print(f'По данному запросу найдено {result[5]["count"]} совпадений.\n')
+    for val in result.values():
+        for item in val['items']:
+            # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
+            if item['is_closed'] and not item['can_access_closed'] or 'relation' not in item:
+                continue
 
-    for item in result[5]['items']:
-        # Отсеиваем полностью закрытые профили.
-        if item['is_closed'] and not item['can_access_closed']:
-            continue
+            rating = 0
+            item_dict = {
+                'Реципиент': f'{item["first_name"]} {item["last_name"]}',
+                'Фотография': item['photo_max_orig'],
+                'Адрес в ВК': f'https://vk.com/id{item["id"]}',
+                'id': item['id'],
+                'select': 0,
+            }
+            if 'relation' in item:
+                item_dict['Семейное положение'] = relation[item['relation']][1]
+                rating += relation[item['relation']][0]
+            if 'occupation' in item:
+                if item['occupation']['type'] == 'university':
+                    item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
+                elif item['occupation']['type'] == 'work':
+                    item_dict['Работает в'] = item['occupation']['name']
+                elif item['occupation']['type'] == 'school':
+                    item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
+            if item['is_friend']:
+                item_dict['Является ли Вашим другом'] = 'да'
+                rating += 5
+            else:
+                item_dict['Является ли Вашим другом'] = 'нет'
+            if item['common_count']:
+                rating += item['common_count']
+            item_dict['Количество общих друзей'] = item['common_count']
 
-        rating = 0
-        item_dict = {
-            'Реципиент': f'{item["first_name"]} {item["last_name"]}',
-            'Фотография': item['photo_max_orig'],
-            'Адрес в ВК': f'https://vk.com/id{item["id"]}',
-        }
-        if 'relation' in item:
-            item_dict['Семейное положение'] = relation[item['relation']][1]
-            rating += relation[item['relation']][0]
-        if 'occupation' in item:
-            if item['occupation']['type'] == 'university':
-                item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
-            elif item['occupation']['type'] == 'work':
-                item_dict['Работает в'] = item['occupation']['name']
-            elif item['occupation']['type'] == 'school':
-                item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
-        if item['is_friend']:
-            item_dict['Является ли Вашим другом'] = 'да'
-            rating += 5
-        else:
-            item_dict['Является ли Вашим другом'] = 'нет'
-        if item['common_count']:
-            rating += item['common_count']
-        item_dict['Количество общих друзей'] = item['common_count']
-
-        item_dict['rating'] = rating
-        users[item['id']] = item_dict
+            item_dict['rating'] = rating
+            users[item['id']] = item_dict
 
     # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
-    # groups, errors = vk_api.vk_request_one_param_pool(
-    #     vk_connect.vk_session,
-    #     'groups.get',   # Метод
-    #     key='user_id',  # Изменяющийся параметр
-    #     values=list(users.keys()),
-    #     default_values={'count': 1000}
-    # )
-    # if not len(errors):
-    #     for key, value in groups.items():
-    #         user_groups = set(value['items'])
-    #         user_groups &= vkinder.groups
-    #         users[key]['rating'] += len(user_groups)
-    #         users[key]['Количество общих групп: '] = len(user_groups)
+    groups, errors = vk_api.vk_request_one_param_pool(
+        vk_connect.vk_session,
+        'groups.get',   # Метод
+        key='user_id',  # Изменяющийся параметр
+        values=list(users.keys()),
+        default_values={'count': 1000}
+    )
+    if not len(errors):
+        for key, value in groups.items():
+            user_groups = set(value['items'])
+            user_groups &= vkinder.groups
+            users[key]['rating'] += len(user_groups)
+            users[key]['Количество общих групп'] = len(user_groups)
 
-    # Обновляем базу реципиентов, а в таблицу vkinder заносим offset.
-    vkinder.update_vkusers()
+    # Обновляем базу реципиентов, а в атрибуты vkinder заносим offset.
+    if vkinder.age_current[0] == 0:
+        vkinder.age_current = [1, vkinder.age_current[1] + 1]
+    else:
+        vkinder.age_current[0] += 1
+    vkinder.update_vkusers(users)
     # Сортируем список реципиентов по рейтингу.
     return sorted(users.values(), key=lambda x: x['rating'], reverse=True)
+
+
+def calculate_offset(vkinder):
+    if vkinder.age_current[1] >= 13:
+        vkinder.age_current = [1, 1]
+        vkinder.age_min -= 1
+        return 0
+    if vkinder.age_current[0] < 29:
+        return 0
+    elif vkinder.age_current[0] >= 29 and vkinder.age_current[1] == 2:
+        vkinder.age_current = [1, 3]
+    elif vkinder.age_current[0] >= 31 and vkinder.age_current[1] in [4, 6, 9, 11]:
+        vkinder.age_current = [1, vkinder.age_current[1] + 1]
+    elif vkinder.age_current[0] >= 32:
+        vkinder.age_current = [1, vkinder.age_current[1] + 1]
+    return vkinder.age_min < vkinder.age_max
 
 
 def begin_search(vkinder, vk_connect):
@@ -219,18 +259,48 @@ def begin_search(vkinder, vk_connect):
     print(f'Пол: {sex}\n'
           f'Город: {vkinder.find_city["title"]}\n'
           f'Интересы: {vkinder.find_interests}\n')
-    users = users_search(vkinder, vk_connect)
 
+    users = []
+    while len(users) < 10:
+        if calculate_offset(vkinder):
+            print('Поиск закончен. Вы можете ввести другие параметры поиска.')
+            return 0
+        print(f'Производится поиск: {vkinder.age_current[0]}-{vkinder.age_current[1]}-{vkinder.age_min}')
+        # Задержка от отключения нас от АПИ ВК.
+        sleep(15)
+        users += users_search(vkinder, vk_connect)
+        # если за этот день найдено < 10 человек, то искать за весь месяц сразу.
+        if len(users) < 10:
+            vkinder.age_current[0] = 0
+        print(f' найдено {len(users)} человек.')
+    # Вывод на консоль и разговор с пользователем.
     if users:
         for user in users:
+            result = vkinder.search_vkuser(user['id'])
+            if 'select' in result and result['select'] == 2:
+                continue
             for key, val in user.items():
-                if key == 'id':
+                if key == 'id' or key == 'select':
                     continue
+                if key == 'select' and val == 1:
+                    val = 'В избранном!'
                 print(f'{key}: {val}')
+            print('\n')
+            select = 0
+            while not select:
+                try:
+                    select = int(input('Оцените эту находку (1 - В избранное! / 2 - Никогда больше не видеть!): '))
+                    if select not in [1, 2]:
+                        select = 0
+                except (ValueError, KeyError):
+                    select = 0
+            vkinder.update_vkuser(user['id'], {'select': select})
+            photo = input('Желаете посмотреть тор-3 фотографии? (Y / N)').lower()
+            if photo == 'y':
+                print(vk_connect.get_albums(user['id']))
             print('\n')
     else:
         print('С такими параметрами ничего не найдено.')
-    print('\n', len(users))
 
 
 def new_search(vkinder, vk_connect):
