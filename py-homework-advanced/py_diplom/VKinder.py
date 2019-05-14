@@ -260,7 +260,6 @@ def out_json(vk_connect, users):
     try:
         with open('groups.json', "w") as fh:
             fh.write(out_str)
-        print(out_str)
     except EnvironmentError as err:
         print('Не удалось записать результат в файл "groups.json".', err)
 
