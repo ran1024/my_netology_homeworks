@@ -5,6 +5,8 @@
 #
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
+# В данном модуле собраны все методы для работы с API "В Контакте".
+#
 import vk_api
 
 

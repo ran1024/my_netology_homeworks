@@ -96,6 +96,45 @@ def get_find_params(vkinder, vk_connect):
     return 0
 
 
+def prepare_user(item, relation):
+    """
+    Подготавливаем профиль найденного пользователя к показу и считаем его рейтинг.
+    """
+    # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
+    if item['is_closed'] and not item['can_access_closed'] or 'relation' not in item:
+        continue
+
+    rating = 0
+    item_dict = {
+        'Реципиент': f'{item["first_name"]} {item["last_name"]}',
+        'Фотография': item['photo_max_orig'],
+        'Адрес в ВК': f'https://vk.com/id{item["id"]}',
+        'id': item['id'],
+        'select': 0,
+    }
+    if 'relation' in item:
+        item_dict['Семейное положение'] = relation[item['relation']][1]
+        rating += relation[item['relation']][0]
+    if 'occupation' in item:
+        if item['occupation']['type'] == 'university':
+            item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
+        elif item['occupation']['type'] == 'work':
+            item_dict['Работает в'] = item['occupation']['name']
+        elif item['occupation']['type'] == 'school':
+            item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
+    if item['is_friend']:
+        item_dict['Является ли Вашим другом'] = 'да'
+        rating += 5
+    else:
+        item_dict['Является ли Вашим другом'] = 'нет'
+    if item['common_count']:
+        rating += item['common_count']
+    item_dict['Количество общих друзей'] = item['common_count']
+
+    item_dict['rating'] = rating
+    return item_dict
+
+
 def users_search(vkinder, vk_connect):
     """
     Функция производит поиск в 'ВК', получает группы всех реципиентов и
@@ -120,38 +159,7 @@ def users_search(vkinder, vk_connect):
         exit(code=1)
     for val in result.values():
         for item in val['items']:
-            # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
-            if item['is_closed'] and not item['can_access_closed'] or 'relation' not in item:
-                continue
-
-            rating = 0
-            item_dict = {
-                'Реципиент': f'{item["first_name"]} {item["last_name"]}',
-                'Фотография': item['photo_max_orig'],
-                'Адрес в ВК': f'https://vk.com/id{item["id"]}',
-                'id': item['id'],
-                'select': 0,
-            }
-            if 'relation' in item:
-                item_dict['Семейное положение'] = relation[item['relation']][1]
-                rating += relation[item['relation']][0]
-            if 'occupation' in item:
-                if item['occupation']['type'] == 'university':
-                    item_dict['Образование'] = f'высшее: {item["occupation"]["name"]}'
-                elif item['occupation']['type'] == 'work':
-                    item_dict['Работает в'] = item['occupation']['name']
-                elif item['occupation']['type'] == 'school':
-                    item_dict['Образование'] = f'школа: {item["occupation"]["name"]}'
-            if item['is_friend']:
-                item_dict['Является ли Вашим другом'] = 'да'
-                rating += 5
-            else:
-                item_dict['Является ли Вашим другом'] = 'нет'
-            if item['common_count']:
-                rating += item['common_count']
-            item_dict['Количество общих друзей'] = item['common_count']
-
-            item_dict['rating'] = rating
+            item_dict = prepare_user(item, relation)
             users[item['id']] = item_dict
 
     # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
@@ -171,6 +179,37 @@ def users_search(vkinder, vk_connect):
     vkinder.update_vkusers(users)
     # Сортируем список реципиентов по рейтингу.
     return sorted(users.values(), key=lambda x: x['rating'], reverse=True)
+
+
+def print_users(vkinder, vk_connect, users):
+    """
+    # Выводим на атрибуты найденных людей на консоль и организуем диалог с пользователем
+    по выбору понравившихся, показываем топ-3 фотографии из каждого альбома реципиента.
+    """
+    for user in users:
+        result = vkinder.search_vkuser(user['id'])
+        if 'select' in result and result['select'] == 2:
+            continue
+        for key, val in user.items():
+            if key == 'id' or key == 'select':
+                continue
+            if key == 'select' and val == 1:
+                val = 'В избранном!'
+            print(f'{key}: {val}')
+        print('\n')
+        select = 0
+        while not select:
+            try:
+                select = int(input('Оцените эту находку (1 - В избранное! / 2 - Никогда больше не видеть!): '))
+                if select not in [1, 2]:
+                    select = 0
+            except (ValueError, KeyError):
+                select = 0
+        vkinder.update_vkuser(user['id'], {'select': select})
+        photo = input('Желаете посмотреть тор-3 фотографии? (Y / N)').lower()
+        if photo == 'y':
+            print(vk_connect.get_albums(user['id']))
+        print('\n')
 
 
 def calculate_offset(vkinder):
@@ -209,32 +248,9 @@ def begin_search(vkinder, vk_connect):
         if len(users) < 10:
             vkinder.age_current[0] = 0
         print(f' найдено {len(users)} человек.')
-    # Вывод на консоль и разговор с пользователем.
     if users:
-        for user in users:
-            result = vkinder.search_vkuser(user['id'])
-            if 'select' in result and result['select'] == 2:
-                continue
-            for key, val in user.items():
-                if key == 'id' or key == 'select':
-                    continue
-                if key == 'select' and val == 1:
-                    val = 'В избранном!'
-                print(f'{key}: {val}')
-            print('\n')
-            select = 0
-            while not select:
-                try:
-                    select = int(input('Оцените эту находку (1 - В избранное! / 2 - Никогда больше не видеть!): '))
-                    if select not in [1, 2]:
-                        select = 0
-                except (ValueError, KeyError):
-                    select = 0
-            vkinder.update_vkuser(user['id'], {'select': select})
-            photo = input('Желаете посмотреть тор-3 фотографии? (Y / N)').lower()
-            if photo == 'y':
-                print(vk_connect.get_albums(user['id']))
-            print('\n')
+        # Выводим на консоль и организуем диалог с пользователем.
+        print_users(vkinder, vk_connect, users)
     else:
         print('С такими параметрами ничего не найдено.')
 
