@@ -237,9 +237,6 @@ def print_users(vk_connect, users):
             except (ValueError, KeyError):
                 select = 0
         dbworker.update_vkuser(user['id'], {'select': select})
-        photo = input('Желаете посмотреть тор-3 фотографии? (Y / N)').lower()
-        if photo == 'y':
-            print(vk_connect.get_albums(user['id']))
         print('\n')
 
 

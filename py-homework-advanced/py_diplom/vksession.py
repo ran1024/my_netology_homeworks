@@ -52,9 +52,8 @@ class VkSession:
                                                    'photo_sizes': 1, 'extended': 1},
                                            method='photos.get', max_count=3)
             # добавляем название альбома и ссылки на каждую фотографию
-            a1 = [(p['sizes'][-1]['url'], p["likes"]["count"]) for p in photos['items']]
-            albums.append(sorted(a1, key=lambda x: x[1], reverse=True)[:3])
-        return albums
+            albums += [{'url': p['sizes'][-1]['url'], 'рейтинг': p["likes"]["count"]} for p in photos['items']]
+        return sorted(albums, key=lambda x: x['рейтинг'], reverse=True)[:3]
 
     def get_user_data(self):
         """
