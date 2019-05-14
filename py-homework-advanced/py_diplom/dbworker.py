@@ -16,20 +16,20 @@ class Vkinder:
         self.first_name = ''
         self.last_name = ''
         self.screen_name = ''
+        self.login = ''
+        self.city = {}
         self.interests = []
         self.music = []
         self.movies = []
         self.books = []
         self.groups = set()
+        self.token = ''
         self.age_min = 0
         self.age_max = 0
         self.find_sex = ''
         self.find_city = {}
         self.age_current = [1, 1]
         self.find_interests = []
-        self.token = ''
-        self.login = ''
-        self.city = {}
         # self.offset = 0
 
     def __str__(self):
@@ -72,21 +72,17 @@ class Vkinder:
         else:
             return 1, 'Пользователь не найден.'
 
-    def update_user(self, login, vk):
+    def update_user(self, login, data):
         """
         Метод запрашивает данные пользователя в ВК (т.к. они могли измениться с момента
         предыдущего запуска) и производит обновление записи в таблице базы данных vkinder.
         """
-        result = vk.users.get(fields='interests, music, movies, books, screen_name, city')
-        user = result[0]
-        user['interests'] = user['interests'].split(',')
-        user.pop('is_closed', 0)
-        user.pop('can_access_closed', 0)
-        user['login'] = login
-        user['token'] = self.token
-        result = vk.groups.get(user_id=user['id'])
-        user['groups'] = result['items']
-        self.vkinder.update({'login': login}, {'$set': user}, upsert=True)
+        data.pop('is_closed', 0)
+        data.pop('can_access_closed', 0)
+        data['interests'] = data['interests'].split(',')
+        data['login'] = login
+        data['token'] = self.token
+        self.vkinder.update({'login': login}, {'$set': data}, upsert=True)
         self.find_vkinder(login)
 
     def update_find_params(self, data):

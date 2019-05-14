@@ -5,63 +5,11 @@
 #
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
-import vk_api
 from time import sleep
 from datetime import date
 from pymongo import MongoClient
+from vksession import VkSession
 from dbworker import Vkinder
-
-
-class VkSession:
-
-    API_VERSION = '5.92'
-    APP_ID = 6888361
-
-    def __init__(self):
-        self.vk_session = None
-        self.vk = None
-        self.vk_tools = None
-
-    def login_vk(self, token=None, login=None, password=None):
-        """
-        Авторизация по токену или логин-паролю.
-        """
-        try:
-            if token:
-                self.vk_session = vk_api.VkApi(token=token, app_id=VkSession.APP_ID,
-                                               api_version=VkSession.API_VERSION)
-            elif login and password:
-                self.vk_session = vk_api.VkApi(login, password, api_version=VkSession.API_VERSION,
-                                               scope='friends,photos,audio,status,groups')
-                self.vk_session.auth(token_only=True, reauth=True)
-            else:
-                raise KeyError('Не введен токен или логин-пароль')
-            self.vk = self.vk_session.get_api()
-            self.vk_tools = vk_api.VkTools(self.vk_session)
-            return 0, 'ok'
-        except Exception as error_msg:
-            return 1, f'Ошибка: {error_msg}'
-
-    def get_albums(self, user_id):
-        """
-        Получаем фотографии из всех альбомов для заданного реципиента, сортируем по рейтингу
-        и выводим по топ-3 фото из каждого альбома.
-        """
-        albums = []
-        for album in self.vk.photos.getAlbums(owner_id=user_id, need_system=1)['items']:
-            # получаем список фотографий из альбома
-            photos = self.vk_tools.get_all(values={'owner_id': user_id, 'album_id': album['id'],
-                                                   'photo_sizes': 1, 'extended': 1},
-                                           method='photos.get', max_count=3)
-            # добавляем название альбома и ссылки на каждую фотографию
-            a1 = [(p['sizes'][-1]['url'], p["likes"]["count"]) for p in photos['items']]
-            albums.append(sorted(a1, key=lambda x: x[1], reverse=True)[:3])
-
-            # А вот тут выводятся все фотографии c лайками:
-            # albums.append({'name': album['title'],
-            #                'photos': [(p['sizes'][-1]['url'],
-            #                           f'лайков:{p["likes"]["count"]}') for p in photos['items']]})
-        return albums
 
 
 def if_error(result):
@@ -98,7 +46,17 @@ def user_login(vkinder, vk_connect):
                 res = vk_connect.login_vk(login=login, password=password)
             session_ok = if_error(res)
         if not session_ok:
-            vkinder.update_user(login, vk_connect.vk)
+            # Всегда запрашиваем данные пользователя в ВК
+            # т.к. они могли измениться с момента предыдущего запуска.
+            user_data = vk_connect.get_user_data()
+            # Если у пользователя ВК не указан город:
+            if 'city' not in user_data and not vkinder.city:
+                err = 1
+                while err:
+                    city_title = input('Введите город проживания: ')
+                    err, city = vk_connect.find_city(city_title)
+                    user_data['city'] = city
+            vkinder.update_user(login, user_data)
 
 
 def get_find_params(vkinder, vk_connect):
@@ -117,13 +75,11 @@ def get_find_params(vkinder, vk_connect):
 
     city_title = input('Введите город для поиска: ')
     if city_title:
-        result = vk_connect.vk.database.getCities(country_id=1, q=city_title, need_all=0, count=1)
-        # Если был введён некорректный населённый пункт:
-        if not result['count']:
-            return 1
-        find_city = result['items'][0]
+        err, city = vk_connect.find_city(city_title)
+        find_city = vkinder.city if err else city
     else:
         find_city = vkinder.city
+
     interests = input('Введите желаемые интересы через запятую: ').split(',')
 
     year = date.today().year
@@ -146,7 +102,6 @@ def users_search(vkinder, vk_connect):
     находит количество общих с данным пользователем. Затем подсчитывает
     рейтинг каждой записи и сортирует записи по рейтигу.
     """
-    fields = 'relation, photo_max_orig, is_friend, common_count, occupation, interests, music, movies, books'
     relation = {
         0: (1, 'не указано'),
         1: (4, 'в браке не состоит'),
@@ -159,23 +114,10 @@ def users_search(vkinder, vk_connect):
         8: (0, 'в гражданском браке')
     }
     users = {}
-    result, errors = vk_api.vk_request_one_param_pool(
-        vk_connect.vk_session,
-        'users.search',  # Метод
-        key='status',    # Изменяющийся параметр
-        values=[1, 2, 5, 6],
-        default_values={
-            'count': 1000,
-            'city': vkinder.find_city['id'],
-            'country': 1,
-            'sex': vkinder.find_sex,
-            'birth_day': vkinder.age_current[0],
-            'birth_month': vkinder.age_current[1],
-            'birth_year': vkinder.age_min,
-            'has_photo': 1,
-            'fields': fields
-        }
-    )
+    err, result = vk_connect.find_users(vkinder)
+    if err:
+        print('Поиск не удался. Попробуйте позже.')
+        exit(code=1)
     for val in result.values():
         for item in val['items']:
             # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
@@ -213,13 +155,7 @@ def users_search(vkinder, vk_connect):
             users[item['id']] = item_dict
 
     # Получаем группы всех реципиентов и находим количество общих с данным пользователем.
-    groups, errors = vk_api.vk_request_one_param_pool(
-        vk_connect.vk_session,
-        'groups.get',   # Метод
-        key='user_id',  # Изменяющийся параметр
-        values=list(users.keys()),
-        default_values={'count': 1000}
-    )
+    errors, groups = vk_connect.find_users_groups(list(users.keys()))
     if not len(errors):
         for key, value in groups.items():
             user_groups = set(value['items'])
