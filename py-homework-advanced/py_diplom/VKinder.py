@@ -7,9 +7,40 @@
 #
 from time import sleep
 from datetime import date
-from pymongo import MongoClient
 from vksession import VkSession
-from dbworker import Vkinder
+import dbworker
+
+
+class Vkinder:
+
+    def __init__(self):
+        self.id = ''
+        self.first_name = ''
+        self.last_name = ''
+        self.screen_name = ''
+        self.login = ''
+        self.city = {}
+        self.interests = []
+        self.music = []
+        self.movies = []
+        self.books = []
+        self.groups = set()
+        self.token = ''
+        self.age_min = 0
+        self.age_max = 0
+        self.find_sex = ''
+        self.find_city = {}
+        self.age_current = [1, 1]
+        self.find_interests = []
+
+    def __str__(self):
+        return f' {{\n\tid: {self.id},\n\tfirst_name: {self.first_name}\n\tlast_name: {self.last_name}\n\t' \
+            f'screen_name: {self.screen_name}\n\tlogin: {self.login}\n\tcity: {self.city}\n\t' \
+            f'interests: {self.interests}\n\tmusic: {self.music}\n\tmovies: {self.movies}\n\t' \
+            f'books: {self.books}\n\tgroups: {self.groups}\n\ttoken: {self.token}\n\t' \
+            f'age_min: {self.age_min}\n\tage_max: {self.age_max}\n\tage_current: {self.age_current}\n\t' \
+            f'find_sex: {self.find_sex}\n\tfind_city: {self.find_city}\n\t' \
+            f'find_interests: {self.find_interests}\n }}'
 
 
 def if_error(result):
@@ -32,7 +63,7 @@ def user_login(vkinder, vk_connect):
     session_ok = 1
     while session_ok:
         login = input('Введите номер телефона: ')
-        result = vkinder.find_vkinder(login)
+        result = dbworker.find_vkinder(vkinder, login)
         if not result[0] and result[1]:
             res = vk_connect.login_vk(token=result[1])
             session_ok = if_error(res)
@@ -56,7 +87,7 @@ def user_login(vkinder, vk_connect):
                     city_title = input('Введите город проживания: ')
                     err, city = vk_connect.find_city(city_title)
                     user_data['city'] = city
-            vkinder.update_user(login, user_data)
+            dbworker.update_user(vkinder, login, user_data)
 
 
 def get_find_params(vkinder, vk_connect):
@@ -92,7 +123,7 @@ def get_find_params(vkinder, vk_connect):
     vkinder.age_current = [1, 1]
     find_data = {'age_min': age_min, 'age_max': age_max,
                  'find_sex': sex, 'find_city': find_city, 'find_interests': interests}
-    vkinder.update_find_params(find_data)
+    dbworker.update_find_params(vkinder, find_data)
     return 0
 
 
@@ -176,18 +207,18 @@ def users_search(vkinder, vk_connect):
         vkinder.age_current = [1, vkinder.age_current[1] + 1]
     else:
         vkinder.age_current[0] += 1
-    vkinder.update_vkusers(users)
+    dbworker.update_vkusers(vkinder, users)
     # Сортируем список реципиентов по рейтингу.
     return sorted(users.values(), key=lambda x: x['rating'], reverse=True)
 
 
-def print_users(vkinder, vk_connect, users):
+def print_users(vk_connect, users):
     """
     # Выводим на атрибуты найденных людей на консоль и организуем диалог с пользователем
     по выбору понравившихся, показываем топ-3 фотографии из каждого альбома реципиента.
     """
     for user in users:
-        result = vkinder.search_vkuser(user['id'])
+        result = dbworker.search_vkuser(user['id'])
         if 'select' in result and result['select'] == 2:
             continue
         for key, val in user.items():
@@ -205,7 +236,7 @@ def print_users(vkinder, vk_connect, users):
                     select = 0
             except (ValueError, KeyError):
                 select = 0
-        vkinder.update_vkuser(user['id'], {'select': select})
+        dbworker.update_vkuser(user['id'], {'select': select})
         photo = input('Желаете посмотреть тор-3 фотографии? (Y / N)').lower()
         if photo == 'y':
             print(vk_connect.get_albums(user['id']))
@@ -250,7 +281,7 @@ def begin_search(vkinder, vk_connect):
         print(f' найдено {len(users)} человек.')
     if users:
         # Выводим на консоль и организуем диалог с пользователем.
-        print_users(vkinder, vk_connect, users)
+        print_users(vk_connect, users)
     else:
         print('С такими параметрами ничего не найдено.')
 
@@ -272,9 +303,7 @@ def next_search(vkinder, vk_connect):
 
 def main():
     functions = dict(new=new_search, next=next_search)
-    connect = MongoClient()
-    db = connect.vkinder
-    vkinder = Vkinder(db)
+    vkinder = Vkinder()
     vk_connect = VkSession()
     user_login(vkinder, vk_connect)
 
