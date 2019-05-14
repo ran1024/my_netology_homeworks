@@ -5,10 +5,11 @@
 #
 # Copyright 2019 Aleksei Remnev <ran1024@yandex.ru>
 #
+import json
+import dbworker
 from time import sleep
 from datetime import date
 from vksession import VkSession
-import dbworker
 
 
 class Vkinder:
@@ -131,10 +132,6 @@ def prepare_user(item, relation):
     """
     Подготавливаем профиль найденного пользователя к показу и считаем его рейтинг.
     """
-    # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
-    if item['is_closed'] and not item['can_access_closed'] or 'relation' not in item:
-        continue
-
     rating = 0
     item_dict = {
         'Реципиент': f'{item["first_name"]} {item["last_name"]}',
@@ -190,6 +187,9 @@ def users_search(vkinder, vk_connect):
         exit(code=1)
     for val in result.values():
         for item in val['items']:
+            # Отсеиваем полностью закрытые профили и тех, кто не афиширует семейное положение.
+            if item['is_closed'] and not item['can_access_closed'] or 'relation' not in item:
+                continue
             item_dict = prepare_user(item, relation)
             users[item['id']] = item_dict
 
@@ -247,16 +247,25 @@ def calculate_offset(vkinder):
     if vkinder.age_current[1] >= 13:
         vkinder.age_current = [1, 1]
         vkinder.age_min -= 1
-        return 0
-    if vkinder.age_current[0] < 29:
-        return 0
-    elif vkinder.age_current[0] >= 29 and vkinder.age_current[1] == 2:
+    if vkinder.age_current[0] >= 29 and vkinder.age_current[1] == 2:
         vkinder.age_current = [1, 3]
     elif vkinder.age_current[0] >= 31 and vkinder.age_current[1] in [4, 6, 9, 11]:
         vkinder.age_current = [1, vkinder.age_current[1] + 1]
     elif vkinder.age_current[0] >= 32:
         vkinder.age_current = [1, vkinder.age_current[1] + 1]
     return vkinder.age_min < vkinder.age_max
+
+
+def out_json(vk_connect, users):
+    for user in users[:10]:
+        user['photos'] = vk_connect.get_albums(user['id'])
+    out_str = json.dumps(users[:10], indent=1, ensure_ascii=False)
+    try:
+        with open('groups.json', "w") as fh:
+            fh.write(out_str)
+        print(out_str)
+    except EnvironmentError as err:
+        print('Не удалось записать результат в файл "groups.json".', err)
 
 
 def begin_search(vkinder, vk_connect):
@@ -280,6 +289,8 @@ def begin_search(vkinder, vk_connect):
             vkinder.age_current[0] = 0
         print(f' найдено {len(users)} человек.')
     if users:
+        # Выводим в json:
+        out_json(vk_connect, users)
         # Выводим на консоль и организуем диалог с пользователем.
         print_users(vk_connect, users)
     else:

@@ -73,7 +73,7 @@ class VkSession:
         result = self.vk.database.getCities(country_id=1, q=city_title, need_all=0, count=1)
         # Если был введён некорректный населённый пункт:
         if not result['count']:
-            return 1, 'City not found.'
+            return 1, 'Not Found'
         return 0, result['items'][0]
 
     def find_users(self, vkinder):

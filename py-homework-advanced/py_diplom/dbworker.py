@@ -63,9 +63,8 @@ def update_find_params(user, data):
     Метод обновляет параметры поиска в базе данных и в экземпляре класса.
     """
     data['age_current'] = user.age_current
-    data['offset'] = 0
     result = vkinder.update({'id': user.id}, {'$set': data}, upsert=False)
-    find_vkinder(user.login)
+    find_vkinder(user, user.login)
     return result
 
 
