@@ -256,10 +256,9 @@ def calculate_offset(vkinder):
 def out_json(vk_connect, users):
     for user in users[:10]:
         user['photos'] = vk_connect.get_albums(user['id'])
-    out_str = json.dumps(users[:10], indent=1, ensure_ascii=False)
     try:
-        with open('groups.json', "w") as fh:
-            fh.write(out_str)
+        with open('groups.json', "w", encoding='utf8') as fh:
+            json.dump(users[:10], fh, indent=1, ensure_ascii=True)
     except EnvironmentError as err:
         print('Не удалось записать результат в файл "groups.json".', err)
 
