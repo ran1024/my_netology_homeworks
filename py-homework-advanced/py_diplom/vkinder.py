@@ -212,7 +212,7 @@ def users_search(vkinder, vk_connect):
     return sorted(users.values(), key=lambda x: x['rating'], reverse=True)
 
 
-def print_users(vk_connect, users):
+def print_users(users):
     """
     # Выводим атрибуты найденных людей на консоль и организуем диалог с пользователем
     по выбору понравившихся, показываем топ-3 фотографии из каждого альбома реципиента.
@@ -287,7 +287,7 @@ def begin_search(vkinder, vk_connect):
         # Выводим в json:
         out_json(vk_connect, users)
         # Выводим на консоль и организуем диалог с пользователем.
-        print_users(vk_connect, users)
+        print_users(users)
     else:
         print('С такими параметрами ничего не найдено.')
 
