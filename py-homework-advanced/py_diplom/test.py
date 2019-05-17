@@ -11,20 +11,15 @@ import vkinder
 
 class VkinderTest(unittest.TestCase):
 
-    # @classmethod
-    def setUp(self) -> None:
-        self.relation = {
-            0: (1, 'не указано'),
+    @classmethod
+    def setUpClass(cls):
+        cls.relation = {
             1: (4, 'в браке не состоит'),
             2: (2, 'есть друг или подруга'),
-            3: (1, 'помолвлен / помолвлена'),
-            4: (0, 'состоит в браке'),
             5: (3, 'всё сложно'),
             6: (5, 'в активном поиске'),
-            7: (2, 'влюблён / влюблена'),
-            8: (0, 'в гражданском браке')
         }
-        self.item = {
+        cls.item = {
             'first_name': 'Vasia',
             'last_name': 'Pupkin',
             'photo_max_orig': 'aaa',
@@ -33,9 +28,20 @@ class VkinderTest(unittest.TestCase):
             'is_friend': 1,
             'common_count': 2,
         }
+        cls.item_dict = {
+            'Реципиент': f'{cls.item["first_name"]} {cls.item["last_name"]}',
+            'Фотография': cls.item['photo_max_orig'],
+            'Адрес в ВК': f'https://vk.com/id{cls.item["id"]}',
+            'id': cls.item['id'],
+            'select': 0,
+            'Семейное положение': cls.relation[cls.item['relation']][1],
+            'Является ли Вашим другом': 'да',
+            'Количество общих друзей': cls.item['common_count'],
+            'rating': 11
+        }
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDownClass(cls):
         pass
 
     def test_if_error(self):
@@ -43,10 +49,7 @@ class VkinderTest(unittest.TestCase):
         self.assertEqual(vkinder.if_error([1, 'Это тестовое сообщение']), 1)
 
     def test_prepare_user(self):
-        item_dict = {
-
-        }
-        self.assertEqual(vkinder.prepare_user(self.item, self.relation)['rating'], 11)
+        self.assertDictEqual(vkinder.prepare_user(self.item, self.relation), self.item_dict)
 
     # def test_mul(self):
     #     self.assertEqual(calc.mul(2, 5), 10)
