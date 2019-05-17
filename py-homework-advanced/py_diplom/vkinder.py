@@ -46,7 +46,7 @@ class Vkinder:
 
 def if_error(result):
     if result[0]:
-        print(f'Произошла ошибка авторизации: {result[1]}.\n Попробуйте ещё раз.')
+        print(f'Произошла ошибка авторизации: {result[1]}.\nПопробуйте ещё раз.')
         return 1
     else:
         return 0
