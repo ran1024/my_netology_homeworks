@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+
+  <div class="container">
+    <div class="section">
+
+      <h3>Спасибо, что посетили наш сайт!</h3>
+      <p><a href="{% url 'landing' %}?ab-test-arg=original">Оригинальная страница</a></p>
+      <p><a href="{% url 'landing' %}?ab-test-arg=test">Тестовая страница</a></p>
+      <p><a href="{% url 'stats' %}">Страница статистики</a></p>
+
+    </div>
+  </div>
+{% endblock %}
