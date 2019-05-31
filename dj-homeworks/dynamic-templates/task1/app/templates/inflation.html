@@ -17,9 +17,38 @@
       <div class="row">
         <h1 class="col s12">Инфляция в России</h1>
         <div class="col s12 m8">
-        
-        <!-- Ваша логика -->
-
+            <table>
+                <tr>
+                    {% for key in keys %}
+                      {% if forloop.last %}
+                        <th bgcolor='grey'>Всего</th>
+                      {% else %}
+                        <th>{{ key }}</th>
+                      {% endif %}
+                    {% endfor %}
+                </tr>
+                {% for item in list_items %}
+                  <tr>
+                    {% for value in item %}
+                      {% if forloop.first %}
+                        <th>{{ value|floatformat }}</th>
+                      {% elif forloop.last %}
+                        <td bgcolor='grey'>{{ value }}</td>
+                      {% elif value < 0 %}
+                        <td bgcolor='green'>{{ value }}</td>
+                      {% elif value > 1 and value <= 2 %}
+                        <td bgcolor='#ff8585'>{{ value }}</td>
+                      {% elif value > 2 and value <= 5 %}
+                        <td bgcolor='#ff5d00'>{{ value }}</td>
+                      {% elif value > 5 %}
+                        <td bgcolor='#ff0000'>{{ value }}</td>
+                      {% else %}
+                        <td>{{ value }}</td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+            </table>
         </div>
       </div>
     {% endblock %}

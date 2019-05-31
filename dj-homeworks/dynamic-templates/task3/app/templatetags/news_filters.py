@@ -1,22 +1,45 @@
 from django import template
-
+import time
 
 register = template.Library()
 
+current_time = time.time()
 
 @register.filter
 def format_date(value):
-    # Ваш код
-    return value
+    delta = current_time - value
+    if delta < 600:
+        return 'только что'
+    elif delta < 3600:
+        return f'{int(delta // 60)} минут назад'
+    elif delta < 86400:
+        return f'{int(delta // 3600)} часов назад'
+    else:
+        d = time.localtime(value)
+        return f'{d.tm_year}-{d.tm_mon}-{d.tm_mday}'
 
-
-# необходимо добавить фильтр для поля `score`
-
+@register.filter
+def format_scope(value):
+    if value < -5:
+        return 'всё плохо'
+    elif -5 <= value <= 5:
+        return 'нейтрально'
+    else:
+        return 'хорошо' 
 
 @register.filter
 def format_num_comments(value):
-    # Ваш код
-    return value
+    if value == 0:
+        return 'Оставьте комментарий'
+    elif 0 < value <= 50:
+        return value
+    else:
+        return '50+'
 
+@register.filter
+def format_selftext(value):
+    text_list = value.split(' ')
+    value = ' '.join(text_list[:5]) + ' . . . ' + ' '.join(text_list[-5:])
+    return value
 
 

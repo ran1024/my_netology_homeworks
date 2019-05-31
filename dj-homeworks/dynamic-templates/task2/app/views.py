@@ -35,5 +35,4 @@ def examples_view(request):
     context = {
         'items': items
     }
-    return render(request, template_name,
-                  context)
+    return render(request, template_name, context)
