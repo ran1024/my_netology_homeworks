@@ -13,12 +13,7 @@ counter_click = Counter()
 def index(request):
     # Реализуйте логику подсчета количества переходов с лендига по GET параметру from-landing
     ind = request.GET.get('from-landing')
-    if ind == 'test':
-        counter_show['from_test'] += 1
-        print(counter_show)
-    else:
-        counter_show['from_original'] += 1
-        print(counter_show)
+    counter_show[ind] += 1
     return render_to_response('index.html')
 
 
@@ -28,12 +23,9 @@ def landing(request):
     # который может принимать значения original и test
     # Так же реализуйте логику подсчета количества показов
     ind = request.GET.get('ab-test-arg')
+    counter_click[ind] += 1
     if ind == 'original':
-        counter_show['to_original'] += 1
-        print(counter_show)
         return render_to_response('landing.html')
-    counter_show['to_test'] += 1
-    print(counter_show)
     return render_to_response('landing_alternate.html')
 
 
@@ -46,12 +38,8 @@ def stats(request):
         'test_conversion': 0.5,
         'original_conversion': 0.4,
     }
-    try:
-        context_dict['original_conversion'] = counter_show['from_original'] / counter_show['to_original']
-    except ZeroDivisionError:
-        context_dict['original_conversion'] = 0
-    try:
-        context_dict['test_conversion'] = counter_show['from_test'] / counter_show['to_test']
-    except ZeroDivisionError:
-        context_dict['test_conversion'] = 0
+    for i in context_dict:
+        ind, _ = i.split('_')
+        context_dict[i] = counter_show[ind] / counter_click[ind] if counter_click[ind] else 0
+
     return render_to_response('stats.html', context=context_dict)

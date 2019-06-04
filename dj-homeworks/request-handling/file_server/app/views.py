@@ -4,6 +4,7 @@ from datetime import datetime
 from django.shortcuts import render
 from django.conf import settings
 
+
 def file_list(request, year=None, month=None, day=None):
     # Реализуйте алгоритм подготавливающий контекстные данные для шаблона по примеру:
     template_name = 'index.html'
