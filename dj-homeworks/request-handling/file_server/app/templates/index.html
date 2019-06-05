@@ -12,16 +12,16 @@
         <i class="material-icons circle green">insert_chart</i>
           <span class="title"><a href="{% url 'file_content' name=f.name %}">{{ f.name }}</a></span>
         <p>
-          Создан: {% if date.date == f.ctime.date %}
+          Создан: {% if date == f.ctime.date %}
             {{ f.ctime }}
           {% else %}
-            <a href="{% url 'file_list' date=f.ctime %}">{{ f.ctime }}</a> {{ f.ctime.time }}
+            <a href="{% url 'file_list' date=f.ctime.date %}">{{ f.ctime.date }}</a> {{ f.ctime.time }}
           {% endif %}
           <br>
-          Изменен: {% if date.date == f.mtime.date %}
+          Изменен: {% if date == f.mtime.date %}
             {{ f.mtime }}
           {% else %}
-            <a href="{% url 'file_list' date=f.mtime %}">{{ f.mtime }}</a> {{ f.mtime.time }}
+            <a href="{% url 'file_list' date=f.mtime.date %}">{{ f.mtime.date }}</a> {{ f.mtime.time }}
           {% endif %}
         </p>
       </li>
