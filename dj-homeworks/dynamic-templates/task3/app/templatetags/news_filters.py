@@ -8,11 +8,11 @@ current_time = time.time()
 @register.filter
 def format_date(value):
     delta = current_time - value
-    if delta < 600:
+    if delta < 60*10:
         return 'только что'
-    elif delta < 3600:
+    elif delta < 60*60:
         return f'{int(delta // 60)} минут назад'
-    elif delta < 86400:
+    elif delta < 60*24*10:
         return f'{int(delta // 3600)} часов назад'
     else:
         d = time.localtime(value)

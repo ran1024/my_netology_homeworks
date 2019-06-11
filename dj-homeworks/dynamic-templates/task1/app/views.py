@@ -14,7 +14,7 @@ def inflation_view(request):
 
     context['keys'] = rows.pop(0)
     for array in rows:
-        list_items.append([float(a) for a in array if a])
+        list_items.append([float(a) if a else '-' for a in array])
     context['list_items'] = list_items
 
     return render(request, template_name, context)

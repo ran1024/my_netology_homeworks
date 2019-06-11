@@ -34,6 +34,8 @@
                         <th>{{ value|floatformat }}</th>
                       {% elif forloop.last %}
                         <td bgcolor='grey'>{{ value }}</td>
+                      {% elif value is None %}
+                        <td> - </td>
                       {% elif value < 0 %}
                         <td bgcolor='green'>{{ value }}</td>
                       {% elif value > 1 and value <= 2 %}
