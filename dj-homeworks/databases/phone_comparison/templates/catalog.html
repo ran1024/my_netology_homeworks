@@ -7,5 +7,91 @@
         <div class="header">
             <h1>Сравнение телефонов</h1>
         </div>
+        <div>
+            <table width="100%" cellpadding="8">
+                <tr>
+                    <td>Модель:</td>
+                    <td style="font-weight:bold; width:25%">{{ asus.phone.model }}</td>
+                    <td style="font-weight:bold; width:25%">{{ samsung.phone.model }}</td>
+                    <td style="font-weight:bold; width:25%">{{ xiaomi.phone.model }}</td>
+                </tr>
+                <tr>
+                    <td>Стоимость:</td>
+                    <td>{{ asus.phone.price }}</td>
+                    <td>{{ samsung.phone.price }}</td>
+                    <td>{{ xiaomi.phone.price }}</td>
+                </tr>
+                <tr>
+                    <td>Операционная система:</td>
+                    <td>{{ asus.phone.os }}</td>
+                    <td>{{ samsung.phone.os }}</td>
+                    <td>{{ xiaomi.phone.os }}</td>
+                </tr>                <tr>
+                    <td>Тип SIM-карт:</td>
+                    <td>{{ asus.phone.typesim }}</td>
+                    <td>{{ samsung.phone.typesim }}</td>
+                    <td>{{ xiaomi.phone.typesim }}</td>
+                </tr>                <tr>
+                    <td>Количество SIM-карт:</td>
+                    <td>{{ asus.phone.numsim }}</td>
+                    <td>{{ samsung.phone.numsim }}</td>
+                    <td>{{ xiaomi.phone.numsim }}</td>
+                </tr>                <tr>
+                    <td>Диагональ экрана:</td>
+                    <td>{{ asus.phone.screendiag }}</td>
+                    <td>{{ samsung.phone.screendiag }}</td>
+                    <td>{{ xiaomi.phone.screendiag }}</td>
+                </tr>                <tr>
+                    <td>Разрешение экрана:</td>
+                    <td>{{ asus.phone.screenres }}</td>
+                    <td>{{ samsung.phone.screenres }}</td>
+                    <td>{{ xiaomi.phone.screenres }}</td>
+                </tr>
+                <tr>
+                    <td>Плотность пикселей:</td>
+                    <td>{{ asus.phone.density }}</td>
+                    <td>{{ samsung.phone.density }}</td>
+                    <td>{{ xiaomi.phone.density }}</td>
+                </tr>
+                <tr>
+                    <td>Процессор:</td>
+                    <td>{{ asus.phone.proc }}</td>
+                    <td>{{ samsung.phone.proc }}</td>
+                    <td>{{ xiaomi.phone.proc }}</td>
+                </tr>                <tr>
+                    <td>Объём оперативной памяти:</td>
+                    <td>{{ asus.phone.memory }}</td>
+                    <td>{{ samsung.phone.memory }}</td>
+                    <td>{{ xiaomi.phone.memory }}</td>
+                </tr>                <tr>
+                    <td>NFC:</td>
+                    <td>{% if asus.phone.nfc %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if samsung.phone.nfc %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if xiaomi.phone.nfc %}Есть{% else %}-{% endif %}</td>
+                </tr>                <tr>
+                    <td>ГЛОНАСС:</td>
+                    <td>{% if asus.phone.glonas %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if samsung.phone.glonas %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if xiaomi.phone.glonas %}Есть{% else %}-{% endif %}</td>
+                </tr>                <tr>
+                    <td>GPS:</td>
+                    <td>{% if asus.phone.gps %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if samsung.phone.gps %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if xiaomi.phone.gps %}Есть{% else %}-{% endif %}</td>
+                </tr>
+                </tr>                <tr>
+                    <td>FM-Радио:</td>
+                    <td>{% if asus.phone.fmradio %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if samsung.phone.fmradio %}Есть{% else %}-{% endif %}</td>
+                    <td>{% if xiaomi.phone.fmradio %}Есть{% else %}-{% endif %}</td>
+                </tr>
+                <tr valign="top">
+                    <td>Дополнительно:</div></td>
+                    <td>{{ asus.additional }}</td>
+                    <td>{{ samsung.additional }}</td>
+                    <td>{{ xiaomi.additional }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
 {% endblock %}
