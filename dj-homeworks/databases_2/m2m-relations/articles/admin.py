@@ -33,6 +33,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_display_links = ('title', 'published_at')
     inlines = [RelationsInline]
 
+
 @admin.register(Rubric)
 class RubricAdmin(admin.ModelAdmin):
     pass

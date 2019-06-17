@@ -1,6 +1,5 @@
 from django.views.generic import ListView
 from django.shortcuts import render
-from django.db.models import Prefetch
 
 from .models import Student
 

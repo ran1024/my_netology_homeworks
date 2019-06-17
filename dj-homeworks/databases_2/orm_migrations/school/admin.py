@@ -5,7 +5,8 @@ from .models import Student, Teacher
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'group')
+    list_display_link = ('name', 'group')
 
 
 @admin.register(Teacher)
