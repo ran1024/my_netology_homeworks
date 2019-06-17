@@ -20,7 +20,7 @@
         <div class="row">
             <div class="book col-md-4">
                 {% if prev_date %}
-                <a class="button button-primary" href="/books/{{ prev_date|date:'Y-m-d' }}/">< {{ prev_date|date:"Y-m-d" }}</a>
+                <a class="button button-primary menu" href="/books/{{ prev_date|date:'Y-m-d' }}/">< {{ prev_date|date:"Y-m-d" }}</a>
                 {% endif %}
                 {% if next_date %}
                 <a class="button button-primary" href="/books/{{ next_date|date:'Y-m-d' }}/">{{ next_date|date:"Y-m-d" }} ></a>
