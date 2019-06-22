@@ -61,7 +61,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'product_review.wsgi.application'
-
+SESSION_EXPIRE_AT_BROWSER_CLOSE = 'True'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases

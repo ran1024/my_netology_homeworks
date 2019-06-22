@@ -7,15 +7,48 @@
 
     <script type="text/javascript" src="{% static 'js/jquery3.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+    <style>
+        body {
+            background: #f5f4f1;
+        }
+        form {
+            background: #fff;
+            width: 300px;
+            margin: auto;
+            padding: 30px 50px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        .mybtn {
+            background: #bc8e5c;
+            width: 100%;
+            border: none;
+            color: #fff;
+            padding:10px;
+        }
+        .err {
+            color: red;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        label {
+            width: 100%;
+            padding: 2px;
+            margin: 10px 0px -16px 0px;
+        }
+    </style>
 </head>
 <body>
     <div class="left-margin width300">
-        <form action="" method="GET">
+        <form action="" method="POST">
+            {% csrf_token %}
             {% for field in form %}
-            <p>{{ field.label_tag }}</p> {{ field }}
-            {{ field.errors }}
+            <p>{{ field.label_tag }}</p>
+            <em class="err">{{ field.errors }}</em>
+            <p> {{ field }} </p>
             {% endfor %}
-            <input type="submit" value="Подсчитать"/>
+            <p><input type="submit" class="mybtn" value="Подсчитать"/></p>
         </form>
     </div>
     <div class="left-margin width300">
