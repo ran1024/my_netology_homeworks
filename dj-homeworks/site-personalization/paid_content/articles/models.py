@@ -1,10 +1,16 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class Profile(models.Model):
-    pass
+class AdvUser(AbstractUser):
+    is_login = models.BooleanFoeld(default=False, verbose_name='Залогинился?')
+    is_subscribe = models.BooleanFoeld(default=False, verbose_name='Подписался?')
+    
+    class Meta(AbstractUser.Meta):
+        pass
 
 
 class Article(models.Model):
-    pass
+    title = models.CharField(max_length=250, verbose_name='Заголовок статьи', help_text='Введите название статьи.')
+    body = models.TextField(verbose_name='Статья')
+    is_paid = models.BooleanFoeld(default=False, verbose_name='Платная')

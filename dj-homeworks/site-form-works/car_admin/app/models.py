@@ -9,7 +9,7 @@ class Car(models.Model):
         return f'{self.brand} {self.model}'
 
     def review_count(self):
-        return Review.objects.filter(car=self).coun()
+        return Review.objects.filter(car=self).count()
         
     class Meta:
         verbose_name_plural = 'Автомобили'
