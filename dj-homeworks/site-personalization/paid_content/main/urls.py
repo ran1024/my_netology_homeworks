@@ -22,5 +22,5 @@ from articles.views import show_articles, show_article
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('articles/', show_articles),
-    url(r'^articles/(?P<id>[0-9]+)/', show_article),
+    url(r'^articles/(?P<id>[0-9]+)/', show_article, name='show_article'),
 ]

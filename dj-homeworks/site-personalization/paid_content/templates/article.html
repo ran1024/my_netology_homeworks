@@ -6,7 +6,15 @@
 {% block content %}
     <div class="container">
         <div class="header">
-            <h3>Заголовок статьи</h3>
+            <h3>{{ article.title }}</h3>
+            <p>{{ article.body }}</p>
         </div>
+        {% if visible %}
+        <form action="{% url 'show_article' article.id  %}" method="POST"">
+            {% csrf_token %}
+            <br>
+            <input type="submit" value="Подписаться"/>
+        </form
+        {% endif %}
     </div>
 {% endblock %}

@@ -10,11 +10,10 @@
             <hr>
             <h2>{{ str1 }}</h2>
             {% if form  %}
-                <form action="{% url 'show_home' %}" method="POST">
+                <form action="{% url 'show_home' %}" method="GET">
                     {% csrf_token %}
                     <div>
-                        <input type="number" min="1" max="10" step="1" name="number" required autofocus>
-                        <input type="submit" value="Проверить">
+                        <input type="submit" value="Продолжить игру">
                     </div>
                 </form>
             {% endif %}

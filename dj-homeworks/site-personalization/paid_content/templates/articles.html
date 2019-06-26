@@ -9,9 +9,9 @@
             <h1>Список статей</h1>
         </div>
         <div class="articles">
-            <h3>Статья 1</h3>
-            <h3>Статья 2</h3>
-            <h3>Статья 3</h3>
+            {% for article in articles_list %}
+            <a href="{% url 'show_article' article.id  %}"><h3>{{ article.title }}</h3></a>
+            {% endfor %}
         </div>
     </div>
 {% endblock %}

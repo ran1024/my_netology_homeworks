@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'articles',
+    'articles.apps.ArticlesConfig',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +56,8 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
+
+AUTH_USER_MODEL = 'articles.AdvUser'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -96,7 +98,7 @@ WSGI_APPLICATION = 'main.wsgi.application'
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'UTC'
 
