@@ -1,11 +1,11 @@
 import csv
 
 from django.shortcuts import render
-from .models import Filecsv, FieldsForFable
+from table.models import Fieldsfortable, Filecsv
 
 CSV_FILENAME = Filecsv.wrk_path.get_path()
 
-COLUMNS = [{'name': x.name, 'width': x.width} for x in FieldsForFable.objects.all()]
+COLUMNS = [{'name': x.name, 'width': x.width} for x in Fieldsfortable.objects.all()]
 
 
 def table_view(request):

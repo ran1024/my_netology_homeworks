@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class FieldsForFable(models.Model):
+class Fieldsfortable(models.Model):
     name = models.CharField(max_length=12, verbose_name='Имя поля')
     width = models.SmallIntegerField(verbose_name='ширина поля')
 
@@ -16,8 +16,9 @@ class FieldsForFable(models.Model):
 
 class FilecsvManager(models.Manager):
     def get_path(self):
-        rec = self.get(pk=1)
-        return rec.file_path
+        if self.filter(pk=1).exists():
+            rec = self.get(pk=1)
+            return rec.file_path
         
     def set_path(self, path):
         self.filter(id=1).delete()

@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from .models import Filecsv, FieldsForFable
+from .models import Filecsv, Fieldsfortable
 
 
-class FieldsForTableAdmin(admin.ModelAdmin):
+class FieldsfortableAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'width')
     list_display_links = ('id', 'name')
 
@@ -14,4 +14,4 @@ class FilecsvAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Filecsv, FilecsvAdmin)
-admin.site.register(FieldsForFable, FieldsForTableAdmin)
+admin.site.register(Fieldsfortable, FieldsfortableAdmin)
