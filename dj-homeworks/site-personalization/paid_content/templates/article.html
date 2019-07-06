@@ -13,7 +13,11 @@
         <form action="{% url 'show_article' article.id  %}" method="POST"">
             {% csrf_token %}
             <br>
-            <input type="submit" value="Подписаться"/>
+            {% if is_login %}
+                <input type="submit" value="Подписаться"/>
+            {% else %}
+                <input type="submit" value="Авторизоваться"/>
+            {% endif %}
         </form
         {% endif %}
     </div>
