@@ -1,3 +1,35 @@
 body {
   padding-top: 3.5rem;
 }
+
+.prod-name {
+    height: 23%;
+    color: green;
+}
+
+.prod-block {
+    margin-bottom: 20px;
+    height: 315px;
+    border-bottom: dotted;
+    border-bottom-width: 0.04em;
+}
+.comment {
+    position: absolute;
+    text-align: center;
+    font-style: italic;
+    font-size: 0.8em;
+    color: blue;
+    top: 10px;
+}
+.price {
+    position: relative;
+    top: 120px;
+    font-size: 1.2em;
+    text-align: center;
+#    background-color: lightblue;
+}
+.centr {
+    position: absolute;
+    bottom: 15px;
+    right: 30%;
+}

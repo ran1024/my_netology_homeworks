@@ -1,0 +1,33 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+    {% for category in items %}
+      <div class="jumbotron">
+        <div class="container">
+            {{ category.description | safe }}
+        </div>
+      </div>
+
+        <div class="container mb-5">
+            <div class="row">
+                {% for product in category.products_set.all %}
+                <div class="col-md-4">
+                    <div class="prod-name">
+                        <h4>{{ product.name }}</h4>
+                    </div>
+                    <a href="{% url 'product_detail' category.id product.id %}">
+                        <img src="{{ product.image.url }}" width="180">
+                    </a>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-secondary" value="Добавить в корзину »">
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

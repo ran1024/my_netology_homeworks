@@ -1,0 +1,35 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+  <div class="container">
+
+    <h1>{{ category.name }}</h1>
+    <hr>
+    <div class="row">
+
+    {% for product in products %}
+
+      <div class="col-md-4 prod-block">
+        <div class="prod-name align-self-center">
+            <h5>{{ product.name }}</h5>
+        </div>
+        <div class="col align-self-end">
+          <a href="{% url 'product_detail' category.id product.id %}">
+              <img src="{{ product.image.url }}" width="180">
+          </a>
+          <p style="margin-bottom:0px; text-align:center;">Цена: {{ product.price }}</p>
+          <form method="post">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-secondary" value="Добавить в корзину »">
+          </form>
+        </div>
+      </div>
+
+    {% endfor %}
+
+    </div>
+
+  </div>
+
+{% endblock %}

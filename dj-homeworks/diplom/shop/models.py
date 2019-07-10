@@ -55,6 +55,7 @@ class Products(models.Model):
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание')
     image = models.ImageField(upload_to='', verbose_name='Изображение')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата поступления')
+    is_top = models.BooleanField(default=False, verbose_name = 'Топ')
     
     def __str__(self):
         return self.name
@@ -90,7 +91,8 @@ class Basket(models.Model):
 class Orders(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.SET('---'), verbose_name='Покупатель')
     comments = models.TextField(blank=True, null=True, default=None, verbose_name='Комментарий к заказу')
-    total_price = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='Общая стоимость заказа')
+    total_number = models.SmallIntegerField(default=1, verbose_name='Общее количество')
+    total_price = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='Общая стоимость')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated = models.DateTimeField(auto_now=True, verbose_name='Последнее изменение')
     
@@ -106,7 +108,7 @@ class Orders(models.Model):
     status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='Статус заказа')
     
     class Meta:
-        ordering = ['customer', 'status']
+        ordering = ['created', 'status']
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
         
@@ -124,7 +126,7 @@ class ProductsInOrder(models.Model):
     class Meta:
         ordering = ['product']
         verbose_name = 'Товар'
-        verbose_name_plural = 'Товары'
+        verbose_name_plural = 'Заказанные товары'
     
     def __str__(self):
         return self.product
@@ -137,9 +139,12 @@ class ProductsInOrder(models.Model):
 def save_order(sender, instance, created, **kwargs):
     products_in_order = ProductsInOrder.objects.filter(order=instance.order)
     order_total_price = 0
+    total_number = 0
     for unit in products_in_order:
         order_total_price += unit.total_amount
+        total_number += unit.number_of_units
     instance.order.total_price = order_total_price
+    instance.order.total_number = total_number
     instance.order.save(force_update=True)
 
 post_save.connect(save_order, sender=ProductsInOrder)
