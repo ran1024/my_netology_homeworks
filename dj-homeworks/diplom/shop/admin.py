@@ -42,10 +42,10 @@ class ProductBrand(admin.ModelAdmin):
 @admin.register(Products)
 class ProductsAdmin(admin.ModelAdmin):
     form = ProductsAdminForm
-    list_display = ('name', 'quantity', 'price', 'created', 'category', 'is_top')
-    list_filter = ('category', 'brand', 'is_top')
+    list_display = ('name', 'quantity', 'price', 'created', 'category', 'is_top', 'is_active')
+    list_filter = ('category', 'brand', 'is_top', 'is_active')
     search_fields = ('name',)
-    fields = (('category', 'is_top'), 'brand', ('name', 'created'), 'quantity', 'price',
+    fields = (('category', 'is_top', 'is_active'), 'brand', ('name', 'created'), 'quantity', 'price',
               'short_text', 'description', 'image')
     readonly_fields = ('created',)
     radio_fields = {'category': admin.HORIZONTAL}

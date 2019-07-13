@@ -55,6 +55,7 @@ class Products(models.Model):
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание')
     image = models.ImageField(upload_to='', verbose_name='Изображение')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата поступления')
+    is_active = models.BooleanField(default=True, verbose_name = 'В продаже')
     is_top = models.BooleanField(default=False, verbose_name = 'Топ')
     
     def __str__(self):
@@ -62,6 +63,7 @@ class Products(models.Model):
         
     class Meta:
         ordering = ['name']
+        index_together = ['category', 'is_active', 'is_top']
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 

@@ -14,14 +14,17 @@
                 {% for product in category.products_set.all %}
                 <div class="col-md-4">
                     <div class="prod-name">
-                        <h4>{{ product.name }}</h4>
+                        <h6>{{ product.name }}</h6>
                     </div>
-                    <a href="{% url 'product_detail' category.id product.id %}">
+                    <a href="{% url 'product_detail' product.id %}">
                         <img src="{{ product.image.url }}" width="180">
                     </a>
 
-                    <form method="POST">
+                    <form method="POST" action="{% url 'cart:cart_add' product.id %}">
                         {% csrf_token %}
+                        <div style="display:none;">
+                            {{ cart_product_form }}
+                        </div>
                         <input type="submit" class="btn btn-secondary" value="Добавить в корзину »">
                     </form>
                 </div>

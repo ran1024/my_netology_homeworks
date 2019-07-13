@@ -3,33 +3,20 @@ body {
 }
 
 .prod-name {
-    height: 23%;
+    height: 20%;
     color: green;
 }
 
 .prod-block {
-    margin-bottom: 20px;
-    height: 315px;
+    margin-bottom: 10px;
+    height: 280px;
     border-bottom: dotted;
     border-bottom-width: 0.04em;
 }
 .comment {
-    position: absolute;
-    text-align: center;
     font-style: italic;
-    font-size: 0.8em;
-    color: blue;
-    top: 10px;
 }
-.price {
-    position: relative;
-    top: 120px;
-    font-size: 1.2em;
-    text-align: center;
-#    background-color: lightblue;
-}
-.centr {
-    position: absolute;
-    bottom: 15px;
-    right: 30%;
+.message {
+    color: white;
+    background-color: grey;
 }

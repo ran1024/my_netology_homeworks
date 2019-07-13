@@ -5,27 +5,29 @@
   <div class="container mt-3">
 
     <div class="row">
-      <div class="col-md-5 col-sm-12">
-        <h2>{{ product.name }}</h2>
-
+      <div class="col-md-5 col-sm-12 text-center">
         <img src="{{ product.image.url }}" width="280">
-
       </div>
 
-      <div class="col-md-1 col-sm-12"></div>
-
-      <div class="col-lg-6 col-md-6 col-sm-12">
-        <div class="comment">
-            <p class="">{{ product.short_text }}</p>
-        </div>
-          <div class="price">
-              <p style="font-size: 2.0em;">Цена: {{ product.price }} руб.</p>
+      <div class="col-lg-7 col-md-7 col-sm-12 text-center">
+          <div>
+            <br>
+            <h3>{{ product.name }}</h3>
+            <br>
+            <p class="comment">{{ product.short_text }}</p>
           </div>
-          <form method="post" action="./cart/" class="centr">
-              {% csrf_token %}
-              <input type="hidden" name="merchandise_id" value="1">
-              <input type="submit" class="btn btn-secondary" value="Добавить в корзину »">
-          </form>
+          <div>
+              <p style="font-size: 1.6em;">Цена: {{ product.price }} руб.</p>
+              {% if product.quantity > 0 %}
+                  <form method="post" action="{% url 'cart:cart_add' product.id %}">
+                    {% csrf_token %}
+                    {{ cart_product_form }}
+                    <input type="submit" class="btn btn-secondary" value="Добавить в корзину">
+                  </form>
+              {% else %}
+                  <p style="font-size: 1.2em; color: orange;">Извините, данный товар закончился.</p>
+              {% endif %}
+          </div>
       </div>
 
     </div>

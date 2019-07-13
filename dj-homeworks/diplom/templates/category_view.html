@@ -7,27 +7,41 @@
     <h1>{{ category.name }}</h1>
     <hr>
     <div class="row">
-
     {% for product in products %}
 
-      <div class="col-md-4 prod-block">
+      <div class="col-md-4 prod-block text-center">
         <div class="prod-name align-self-center">
-            <h5>{{ product.name }}</h5>
+            <h6>{{ product.name }}</h6>
         </div>
         <div class="col align-self-end">
-          <a href="{% url 'product_detail' category.id product.id %}">
-              <img src="{{ product.image.url }}" width="180">
+          <a href="{% url 'product_detail' product.id %}">
+              <img src="{{ product.image.url }}" width="160">
           </a>
-          <p style="margin-bottom:0px; text-align:center;">Цена: {{ product.price }}</p>
-          <form method="post">
+          <p style="margin-bottom:0px;">Цена: {{ product.price }}</p>
+          <form method="post" action="{% url 'cart:cart_add' product.id %}">
               {% csrf_token %}
+              <div style="display:none;">
+                {{ cart_product_form }}
+              </div>
               <input type="submit" class="btn btn-secondary" value="Добавить в корзину »">
           </form>
         </div>
       </div>
 
     {% endfor %}
+    </div>
 
+    <div class="text-center">
+      <form method="get">
+        {% csrf_token %}
+        {% for p in list_pages %}
+          {% if p == page.number %}
+            <input type="submit" class="btn btn-primary" name="page" value="{{ p }}" disabled>
+          {% else %}
+            <input type="submit" class="btn btn-primary" name="page" value="{{ p }}">
+          {% endif %}
+        {% endfor %}
+      </form>
     </div>
 
   </div>
