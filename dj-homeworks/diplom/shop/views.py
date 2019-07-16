@@ -1,27 +1,20 @@
-from django.shortcuts import render, get_object_or_404, get_list_or_404
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 
 from .models import *
+from .forms import CustomerLoginForm
 from cart.forms import CartAddProductForm
 from cart.cart import Cart
 
 
-def _get_context(request):
-    """ Формируем контекст """
-    cart = Cart(request)
-    arr = {'name': 'Список разделов', 'id': 0}
-    context = {'category': arr, 'prod_num': cart.get_total_quantity()}
-    return context
-
-
-def _get_data(request, category_id):
+def _get_data(category_id):
     category = get_object_or_404(ProductCategory.objects.values('id', 'name'), pk=category_id)
     products = Products.objects.select_related('brand').filter(category=category_id, is_active=True)
     brands = list({x.brand for x in products})
-    context = _get_context(request)
-    context['items'] = sorted(brands, key=lambda x: x.name)
-    context['category'] = category
+    context = {'category': category,
+               'items': sorted(brands, key=lambda x: x.name),
+               }
     return products, context
 
 
@@ -30,10 +23,8 @@ def main_page(request):
     template = 'index_body.html'
     pr1 = Prefetch('products_set', queryset=Products.objects.filter(is_top=True))
     categories = get_list_or_404(ProductCategory.objects.prefetch_related(pr1).all())
-    context = _get_context(request)
-    context['items'] = categories
     cart_product_form = CartAddProductForm(initial={'quantity': 1})
-    context['cart_product_form'] = cart_product_form
+    context = {'items': categories, 'cart_product_form': cart_product_form}
 
     return render(request, template, context)
 
@@ -41,7 +32,7 @@ def main_page(request):
 def show_category(request, id, brand_id):
     """ Вывод по категориям товаров """
     template = 'category_view.html'
-    products, context = _get_data(request, id)
+    products, context = _get_data(id)
     cart_product_form = CartAddProductForm(initial={'quantity': 1})
     context['cart_product_form'] = cart_product_form
 
@@ -70,8 +61,47 @@ def product_detail(request, product_id):
     prod_num = cart.get_product_quantity(product_id)
     cart_product_form = CartAddProductForm(initial={'quantity': prod_num})
     categories = get_list_or_404(ProductCategory.objects.values('id', 'name'))
-    context = _get_context(request)
-    context['items'] = categories
-    context['product'] = get_object_or_404(Products, pk=product_id)
-    context['cart_product_form'] = cart_product_form
+    context = {'items': categories,
+               'cart_product_form': cart_product_form,
+               'product': get_object_or_404(Products, pk=product_id)
+               }
+    return render(request, template, context)
+
+
+def data_for_context(request):
+    cart = Cart(request)
+    context = {'category': {'name': 'Список разделов', 'id': 0},
+               'prod_num': cart.get_total_quantity(),
+               'is_login': 'Войти',
+               }
+    if request.session.get('customer'):
+        context['is_login'] = 'Выйти'
+    return context
+
+
+def customer_login(request):
+    template = 'login.html'
+    context = {'next': request.GET['next']}
+    if request.method == 'POST':
+        form = CustomerLoginForm(request.POST)
+        if form.is_valid():
+            if Customers.objects.filter(email=form.cleaned_data['email']).exists():
+                customer = Customers.objects.get(email=form.cleaned_data['email'])
+                if customer.password == form.cleaned_data['password']:
+                    session = request.session
+                    session['customer'] = customer.id
+                    return redirect(request.POST['next'])
+                else:
+                    context['error'] = 'Учётные данные не верны.'
+            else:
+                context['error'] = 'Данный пользователь не зарегистрирован.'
+    form = CustomerLoginForm()
+    context['form'] = form
+    return render(request, template, context)
+
+
+def customer_logout(request):
+    template = 'logout.html'
+    context = {'next': request.GET['next']}
+    del request.session['customer']
     return render(request, template, context)

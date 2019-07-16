@@ -5,7 +5,7 @@ from .forms import ProductCategoryAdminForm, ProductsAdminForm
 
 @admin.register(Customers)
 class CustomersAdmin(admin.ModelAdmin):
-    list_display = ('email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
+    list_display = ('id', 'email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('email',)
     ordering = ('email',)

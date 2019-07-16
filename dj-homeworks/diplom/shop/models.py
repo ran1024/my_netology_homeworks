@@ -110,7 +110,7 @@ class Orders(models.Model):
     status = models.SmallIntegerField(choices=ORDER_STATUS, default=1, verbose_name='Статус заказа')
     
     class Meta:
-        ordering = ['created', 'status']
+        ordering = ['-created', 'status']
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
         

@@ -1,5 +1,5 @@
 from django import forms
-from .models import ProductCategory, Products
+from .models import ProductCategory, Products, Customers
 
 from ckeditor.widgets import CKEditorWidget
 
@@ -19,3 +19,15 @@ class ProductsAdminForm(forms.ModelForm):
         model = Products
         # fields = ('name', 'quantity', 'price', 'category', 'description')
         fields = ('description',)
+
+
+class CustomerLoginForm(forms.Form):
+    email = forms.EmailField(label='')
+    password = forms.CharField(min_length=1, max_length=20, label='', strip=True,
+                               empty_value='Пароль', widget=forms.PasswordInput)
+
+    email.widget.attrs.update({'class': 'form-control',
+                               'placeholder': 'Email',
+                               'autofocus': True})
+    password.widget.attrs.update({'class': 'form-control',
+                                  'placeholder': 'Пароль'})

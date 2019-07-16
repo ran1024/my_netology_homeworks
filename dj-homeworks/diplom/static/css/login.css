@@ -1,9 +1,9 @@
-html,
-body {
+#html,
+.budy {
   height: 100%;
 }
 
-body {
+.customer-login {
   display: -ms-flexbox;
   display: -webkit-box;
   display: flex;
