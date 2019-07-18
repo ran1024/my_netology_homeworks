@@ -81,8 +81,9 @@ class ProductsInOrderAdmin(admin.ModelAdmin):
     list_display = ('order', 'product', 'number_of_units', 'price_of_unit', 'total_amount')
     list_display_links = ('order', 'product')
     list_select_related = True
+    ordering = ('order', 'product')
 
 
-@admin.register(Basket)
-class BasketAdmin(admin.ModelAdmin):
-    pass
+#@admin.register(Basket)
+#class BasketAdmin(admin.ModelAdmin):
+#    pass

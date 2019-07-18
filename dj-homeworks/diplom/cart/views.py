@@ -33,11 +33,12 @@ def cart_remove(request, product_id):
 def cart_detail(request):
     """ Функция показывает корзину """
     cart = Cart(request)
-    categories = ProductCategory.objects.values('id', 'name')
-    arr = {'name': 'Список разделов', 'id': 0}
-    context = {'items': categories, 'category': arr}
+    context = {}
+    # categories = ProductCategory.objects.values('id', 'name')
+    # arr = {'name': 'Список разделов', 'id': 0}
+    # context = {'items': categories, 'category': arr}
     context['cart'] = cart
-    context['prod_num'] = cart.get_total_quantity()
+    # context['prod_num'] = cart.get_total_quantity()
 
     return render(request, 'cart/cart.html', context)
 

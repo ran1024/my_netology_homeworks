@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block title %}
+    Спасибо за заказ
+{% endblock %}
+
+{% block content %}
+
+<div class="container text-center" style="padding: 10%;">
+  <div class="header">
+    <h2>Спасибо за заказ</h2>
+  </div>
+    <p>Идентификатор вашего заказа: {{ order.id }}</p>
+    <br>
+    <p><a href="{% url 'main_page' %}">Назад к покупкам</a></p>
+
+{% endblock %}

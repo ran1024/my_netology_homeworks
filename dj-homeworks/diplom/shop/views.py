@@ -60,7 +60,9 @@ def product_detail(request, product_id):
     cart = Cart(request)
     prod_num = cart.get_product_quantity(product_id)
     cart_product_form = CartAddProductForm(initial={'quantity': prod_num})
+
     categories = get_list_or_404(ProductCategory.objects.values('id', 'name'))
+
     context = {'items': categories,
                'cart_product_form': cart_product_form,
                'product': get_object_or_404(Products, pk=product_id)
@@ -69,6 +71,7 @@ def product_detail(request, product_id):
 
 
 def data_for_context(request):
+    """ Обработчик контекста """
     cart = Cart(request)
     context = {'category': {'name': 'Список разделов', 'id': 0},
                'prod_num': cart.get_total_quantity(),

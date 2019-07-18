@@ -17,17 +17,18 @@ class ProductsAdminForm(forms.ModelForm):
 
     class Meta:
         model = Products
-        # fields = ('name', 'quantity', 'price', 'category', 'description')
         fields = ('description',)
 
 
 class CustomerLoginForm(forms.Form):
     email = forms.EmailField(label='')
-    password = forms.CharField(min_length=1, max_length=20, label='', strip=True,
-                               empty_value='Пароль', widget=forms.PasswordInput)
+    password = forms.CharField(min_length=1, max_length=20, label='',
+                               strip=True, widget=forms.PasswordInput)
 
     email.widget.attrs.update({'class': 'form-control',
                                'placeholder': 'Email',
-                               'autofocus': True})
+                               'autofocus': True,
+                               })
     password.widget.attrs.update({'class': 'form-control',
-                                  'placeholder': 'Пароль'})
+                                  'placeholder': 'Пароль',
+                                  })

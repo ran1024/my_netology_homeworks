@@ -5,10 +5,10 @@ from django.db.models.signals import post_save
 class Customers(models.Model):
     email = models.EmailField(max_length=64, unique=True, verbose_name='Эл.почта')
     password = models.CharField(max_length=20, verbose_name='Пароль')
-    name = models.CharField(max_length=30, blank=True, null=True, default=None, verbose_name='Имя покупателя')
-    surname = models.CharField(max_length=30, blank=True, null=True, default=None, verbose_name='Фамилия покупателя')
-    phone = models.CharField(max_length=20, blank=True, null=True, default=None, verbose_name='Телефон')
-    address = models.TextField(max_length=256, blank=True, null=True, default=None, verbose_name='Адрес покупателя')
+    name = models.CharField(max_length=30, verbose_name='Имя')
+    surname = models.CharField(max_length=30, verbose_name='Фамилия')
+    phone = models.CharField(max_length=20, verbose_name='Телефон')
+    address = models.TextField(max_length=256, verbose_name='Адрес')
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации')
     is_active = models.BooleanField(default=True)
 
@@ -67,28 +67,6 @@ class Products(models.Model):
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 
-
-class Basket(models.Model):
-    session_key = models.CharField(max_length=128, verbose_name='Ключ сессии')
-    product = models.ForeignKey('Products', on_delete=models.CASCADE, verbose_name='Товар')
-    number_of_units = models.SmallIntegerField(default=1, verbose_name='Количество')
-#    price = models.ForeignKey('Products', verbose_name='Цена за единицу')
-#    total_amount = models.DecimalField(verbose_name='Общая стоимость')
-    
-    class Meta:
-        ordering = ['session_key', 'product']
-        verbose_name = 'Товар в корзине'
-        verbose_name_plural = 'Товары в корзине'
-    
-    def __str__(self):
-        return self.product.name
-    
-#    def save(self, *args, **kwargs):
-#        self.price = self.product.price
-#        self.total_amount = self.price * self.number_of_units
-#        super(Basket, self).save(*args, **kwargs)
-
-        
 
 class Orders(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.SET('---'), verbose_name='Покупатель')
@@ -151,3 +129,23 @@ def save_order(sender, instance, created, **kwargs):
 
 post_save.connect(save_order, sender=ProductsInOrder)
 
+
+#class Basket(models.Model):
+#    session_key = models.CharField(max_length=128, verbose_name='Ключ сессии')
+#    product = models.ForeignKey('Products', on_delete=models.CASCADE, verbose_name='Товар')
+#    number_of_units = models.SmallIntegerField(default=1, verbose_name='Количество')
+#    price = models.ForeignKey('Products', verbose_name='Цена за единицу')
+#    total_amount = models.DecimalField(verbose_name='Общая стоимость')
+#    
+#    class Meta:
+#        ordering = ['session_key', 'product']
+#        verbose_name = 'Товар в корзине'
+#        verbose_name_plural = 'Товары в корзине'
+#    
+#    def __str__(self):
+#        return self.product.name
+#    
+#    def save(self, *args, **kwargs):
+#        self.price = self.product.price
+#        self.total_amount = self.price * self.number_of_units
+#        super(Basket, self).save(*args, **kwargs)

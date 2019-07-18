@@ -1,0 +1,45 @@
+{% extends "index.html" %}
+
+{% block title %}
+    Оформление заказа
+{% endblock %}
+
+{% block content %}
+  <div class="container mb-5">
+    <h2>Оформление заказа</h2>
+    <div class="row">
+        <div class="col-md-2">
+            <h4>Заполните форму</h4>
+            <form class="order-form" method="post">
+                {% csrf_token %}
+                {{ customer_form.as_p }}
+                {{ order_form.as_p }}
+                <input type="submit" class="btn btn-primary" value="Отправить">
+            </form>
+        </div>
+        <div class="col-md-2">
+        </div>
+        <div class="order-info col-md-8">
+            <h4>Ваш заказ</h4>
+            <ol>
+                {% for item in cart %}
+                <li>
+                    {{ item.product.name }}
+                    <ul><li>Количество: {{ item.quantity }}<li>Цена: {{ item.total_price }}</ul>
+                </li>
+                {% endfor %}
+            </ol>
+            <br>
+            <div style="color: red;">
+              {% if errors %}
+                <h6>Вы допустили ошибку при заполнении полей формы: </h6>
+                {% for field_name, error in errors.items %}
+                    {{ error }}
+                {% endfor %}
+              {% endif %}
+            </div>
+        </div>
+        
+    </div>
+  </div>
+{% endblock %}
