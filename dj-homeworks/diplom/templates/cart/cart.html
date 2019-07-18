@@ -51,7 +51,8 @@
             </li>
       </ul>
 
-      <form class="card p-2" action="{% url 'orders:order_create' %}">
+      <form class="card p-2"
+            action="{% if is_empty %}#{% else %}{% url 'orders:order_create' %}{% endif %}">
         <button type="submit" class="btn btn-secondary">Заказать</button>
       </form>
     </div>

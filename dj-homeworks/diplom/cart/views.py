@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from shop.models import Products, ProductCategory
+from shop.models import Products
 from .cart import Cart
 from .forms import CartAddProductForm
 
@@ -31,16 +31,12 @@ def cart_remove(request, product_id):
 
 
 def cart_detail(request):
-    """ Функция показывает корзину """
+    """ Функция показывает корзину. Если корзина пуста, блокируем кнопку заказа. """
     cart = Cart(request)
-    context = {}
-    # categories = ProductCategory.objects.values('id', 'name')
-    # arr = {'name': 'Список разделов', 'id': 0}
-    # context = {'items': categories, 'category': arr}
-    context['cart'] = cart
-    # context['prod_num'] = cart.get_total_quantity()
-
-    return render(request, 'cart/cart.html', context)
+    is_empty = False
+    if cart.get_total_quantity() == 0:
+        is_empty = True
+    return render(request, 'cart/cart.html', {'cart': cart, 'is_empty': is_empty})
 
 
 def cart_clear(request):

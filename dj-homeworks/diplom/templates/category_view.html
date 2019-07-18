@@ -4,7 +4,11 @@
 
   <div class="container">
 
-    <h1>{{ category.name }}</h1>
+    {% for item in categories %}
+        {% if item.id == category_id %}
+           <h1>{{ item.name }}</h1>
+        {% endif %}
+    {% endfor %}
     <hr>
     <div class="row">
     {% for product in products %}

@@ -3,6 +3,8 @@ from shop.models import Products
 
 
 class Cart(object):
+    """ Класс для работы с корзиной покупателя через сессии """
+
     def __init__(self, request):
         """ Инициализация корзины покупателя """
         self.session = request.session
@@ -10,6 +12,20 @@ class Cart(object):
         if not cart:
             cart = self.session['cart'] = {}
         self.cart = cart
+
+    def __iter__(self):
+        product_ids = self.cart.keys()
+        products = Products.objects.filter(pk__in=product_ids)
+        for product in products:
+            self.cart[str(product.id)]['product'] = product
+
+        for item in self.cart.values():
+            item['price'] = Decimal(item['price'])
+            item['total_price'] = item['price'] * item['quantity']
+            yield item
+
+    def __len__(self):
+        return sum(item['quantity'] for item in self.cart.values())
 
     def add(self, product, quantity=1, update_quantity=False):
         """ Добавление товара в корзину и обновление количества товара """
@@ -38,20 +54,6 @@ class Cart(object):
     def clear(self):
         del self.session['cart']
         self.session.modified = True
-
-    def __iter__(self):
-        product_ids = self.cart.keys()
-        products = Products.objects.filter(pk__in=product_ids)
-        for product in products:
-            self.cart[str(product.id)]['product'] = product
-
-        for item in self.cart.values():
-            item['price'] = Decimal(item['price'])
-            item['total_price'] = item['price'] * item['quantity']
-            yield item
-
-    def __len__(self):
-        return sum(item['quantity'] for item in self.cart.values())
 
     def get_product_quantity(self, product_id):
         """ Получить количество конкретного товара """

@@ -21,7 +21,7 @@ from .views import main_page, show_category, product_detail, customer_login, cus
 
 urlpatterns = [
     path('', main_page, name='main_page'),
-    path('category/<str:id>/<str:brand_id>/', show_category, name='show_category'),
+    path('category/<str:category_id>/<str:brand_id>/', show_category, name='show_category'),
     path('product/<str:product_id>/', product_detail, name='product_detail'),
     path('customer_login/', customer_login, name='customer_login'),
     path('customer_logout/', customer_logout, name='customer_logout'),

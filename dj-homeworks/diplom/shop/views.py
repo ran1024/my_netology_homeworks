@@ -8,16 +8,6 @@ from cart.forms import CartAddProductForm
 from cart.cart import Cart
 
 
-def _get_data(category_id):
-    category = get_object_or_404(ProductCategory.objects.values('id', 'name'), pk=category_id)
-    products = Products.objects.select_related('brand').filter(category=category_id, is_active=True)
-    brands = list({x.brand for x in products})
-    context = {'category': category,
-               'items': sorted(brands, key=lambda x: x.name),
-               }
-    return products, context
-
-
 def main_page(request):
     """ Главная страница магазина """
     template = 'index_body.html'
@@ -29,10 +19,15 @@ def main_page(request):
     return render(request, template, context)
 
 
-def show_category(request, id, brand_id):
+def show_category(request, category_id, brand_id):
     """ Вывод по категориям товаров """
     template = 'category_view.html'
-    products, context = _get_data(id)
+    products = Products.objects.select_related('brand').filter(category=category_id, is_active=True)
+    brands = list({x.brand for x in products})
+    context = {
+        'category_id': int(category_id),
+        'brands': sorted(brands, key=lambda x: x.name),
+    }
     cart_product_form = CartAddProductForm(initial={'quantity': 1})
     context['cart_product_form'] = cart_product_form
 
@@ -61,22 +56,22 @@ def product_detail(request, product_id):
     prod_num = cart.get_product_quantity(product_id)
     cart_product_form = CartAddProductForm(initial={'quantity': prod_num})
 
-    categories = get_list_or_404(ProductCategory.objects.values('id', 'name'))
-
-    context = {'items': categories,
-               'cart_product_form': cart_product_form,
-               'product': get_object_or_404(Products, pk=product_id)
-               }
+    context = {
+        'cart_product_form': cart_product_form,
+        'product': get_object_or_404(Products, pk=product_id)
+        }
     return render(request, template, context)
 
 
 def data_for_context(request):
     """ Обработчик контекста """
     cart = Cart(request)
-    context = {'category': {'name': 'Список разделов', 'id': 0},
-               'prod_num': cart.get_total_quantity(),
-               'is_login': 'Войти',
-               }
+    categories = ProductCategory.objects.values('id', 'name')
+    context = {
+        'prod_num': cart.get_total_quantity(),
+        'is_login': 'Войти',
+        'categories': categories,
+        }
     if request.session.get('customer'):
         context['is_login'] = 'Выйти'
     return context

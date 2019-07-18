@@ -5,7 +5,7 @@ from .forms import ProductCategoryAdminForm, ProductsAdminForm
 
 @admin.register(Customers)
 class CustomersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
+    list_display = ('email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('email',)
     ordering = ('email',)
@@ -19,10 +19,6 @@ class ProductsInline(admin.TabularInline):
     fk_name = 'category'
     can_delete = False
     verbose_name_plural = 'Список товаров в данной категории'
-
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     return qs.filter(quantity=14)
 
 
 @admin.register(ProductCategory)
@@ -82,8 +78,3 @@ class ProductsInOrderAdmin(admin.ModelAdmin):
     list_display_links = ('order', 'product')
     list_select_related = True
     ordering = ('order', 'product')
-
-
-#@admin.register(Basket)
-#class BasketAdmin(admin.ModelAdmin):
-#    pass
