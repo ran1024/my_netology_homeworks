@@ -1,8 +1,9 @@
 {% extends "index.html" %}
+{% load customfilter %}
 
 {% block content %}
 
-  <div class="container mt-3">
+<div class="container mt-3">
 
     <div class="row">
       <div class="col-md-5 col-sm-12 text-center">
@@ -39,73 +40,47 @@
       </div>
     </div>
     <hr>
-
-    ★★★★★ <span>Вася</span>
-    <p> Хороший отзыв</p>
-
-    ★★ <span>Петя</span>
-    <p> Плохой отзыв</p>
-
+    {% if responses %}
+    {% for response in responses %}
+        {% for star in response.rating|num_for_range %}
+         ★   
+        {% endfor %}
+        <span>{{ response.name }}</span>
+        <p>{{ response.comment }}</p>
+    {% endfor %}
+    {% else %}
+    <em>На данный товар ещё нет отзывов.</em>
+    {% endif %}
     <hr>
 
     <div class="row">
       <div class="col-lg-6 col-md-8 col-sm-12">
         <h4>Оставте отзыв:</h4>
 
-        <form action="./merch/1/feedback" method="post">
-          <input type="hidden" name="csrfmiddlewaretoken"
-                 value="N4vcBqzjoYkU7OTDuAT8hq8srpvYX44nJsswuP7e3EYg0Hq8DgxuR0eiXWbSr5RZ">
+        <form action="{% url 'response_add' product.id %}" method="post">
+          {% csrf_token %}
           <div class="form-group">
-            <label for="name">Имя</label>
-            <input type="text" class="form-control" id="name" aria-describedby="nameHelp"
-                   placeholder="Представтесь" name="name" data-cip-id="name">
+              {{ response_form.name.label }}
+              {{ response_form.name }}
           </div>
           <div class="form-group">
-            <label for="content">Содержание</label>
-            <textarea class="form-control" id="content" placeholder="Содержание"
-                      name="description"></textarea>
+              {{ response_form.comment.label }}
+              {{ response_form.comment }}
           </div>
-
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="mark" id="mark1" value="1">
-            <label class="form-check-label" for="mark1">
-              1
-            </label>
+        <div class="row rating">
+          <div class="col-4 form-group">
+              <div class="form-check">
+                  {{ response_form.rating }}
+              </div>
           </div>
-
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="mark" id="mark2" value="2">
-            <label class="form-check-label" for="mark2">
-              2
-            </label>
+          <div class="col-6 form-group" style="top: 60px;">
+             <p> <button type="submit" class="btn btn-primary">Оставить</button></p>
           </div>
-
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="mark" id="mark3" value="3">
-            <label class="form-check-label" for="mark3">
-              3
-            </label>
-          </div>
-
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="mark" id="mark4" value="4">
-            <label class="form-check-label" for="mark4">
-              4
-            </label>
-          </div>
-
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="mark" id="mark5" value="5">
-            <label class="form-check-label" for="mark5">
-              5
-            </label>
-          </div>
-
-          <button type="submit" class="btn btn-primary">Оставить</button>
+        </div>
         </form>
       </div>
-    </div>
+    </div><br><br><br>
 
-  </div> <!-- /container -->
+</div> <!-- /container -->
 
 {% endblock %}

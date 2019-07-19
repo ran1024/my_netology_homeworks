@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
+from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 
 from .models import *
-from .forms import CustomerLoginForm
+from .forms import CustomerLoginForm, ResponseForm
 from cart.forms import CartAddProductForm
 from cart.cart import Cart
 
@@ -52,15 +53,35 @@ def show_category(request, category_id, brand_id):
 def product_detail(request, product_id):
     """ Страница с детальной информацией по товару и кнопкой заказа """
     template = 'product_detail.html'
+    product = get_object_or_404(Products, pk=product_id)
+    responses = product.responses_set.all()
+    response_form = ResponseForm()
+
     cart = Cart(request)
     prod_num = cart.get_product_quantity(product_id)
     cart_product_form = CartAddProductForm(initial={'quantity': prod_num})
 
     context = {
         'cart_product_form': cart_product_form,
-        'product': get_object_or_404(Products, pk=product_id)
+        'product': product,
+        'responses': responses,
+        'response_form': response_form,
         }
     return render(request, template, context)
+
+
+@require_POST
+def response_add(request, product_id):
+    """ Функция сохраняет отзыв в базе данных """
+    product = get_object_or_404(Products, pk=product_id)
+    form = ResponseForm(request.POST)
+    if form.is_valid():
+        data = form.cleaned_data
+        print(data)
+        response = form.save(commit=False)
+        response.product = product
+        response.save()
+    return redirect('product_detail', product_id)
 
 
 def data_for_context(request):

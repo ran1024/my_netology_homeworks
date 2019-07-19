@@ -44,7 +44,6 @@ class ProductBrand(models.Model):
         verbose_name_plural = 'Бренды'
 
 
-
 class Products(models.Model):
     name = models.CharField(max_length=64, verbose_name='Наименование товара')
     brand = models.ForeignKey(ProductBrand, on_delete=models.CASCADE, verbose_name='Бренд')
@@ -127,25 +126,18 @@ def save_order(sender, instance, created, **kwargs):
     instance.order.total_number = total_number
     instance.order.save(force_update=True)
 
+
 post_save.connect(save_order, sender=ProductsInOrder)
 
 
-#class Basket(models.Model):
-#    session_key = models.CharField(max_length=128, verbose_name='Ключ сессии')
-#    product = models.ForeignKey('Products', on_delete=models.CASCADE, verbose_name='Товар')
-#    number_of_units = models.SmallIntegerField(default=1, verbose_name='Количество')
-#    price = models.ForeignKey('Products', verbose_name='Цена за единицу')
-#    total_amount = models.DecimalField(verbose_name='Общая стоимость')
-#    
-#    class Meta:
-#        ordering = ['session_key', 'product']
-#        verbose_name = 'Товар в корзине'
-#        verbose_name_plural = 'Товары в корзине'
-#    
-#    def __str__(self):
-#        return self.product.name
-#    
-#    def save(self, *args, **kwargs):
-#        self.price = self.product.price
-#        self.total_amount = self.price * self.number_of_units
-#        super(Basket, self).save(*args, **kwargs)
+class Responses(models.Model):
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    product = models.ForeignKey(Products, on_delete=models.CASCADE, verbose_name='Заказ')
+    name = models.CharField(max_length=20, verbose_name='Имя')
+    comment = models.TextField(blank=True, null=True, default=None, verbose_name='Содержание')
+    rating = models.SmallIntegerField(default=0, verbose_name='Рейтинг')
+
+    class Meta:
+        ordering = ['created']
+        verbose_name = 'Отзыв на товар'
+        verbose_name_plural = 'Отзывы на товар'

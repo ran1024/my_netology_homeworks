@@ -3,6 +3,13 @@ from .models import *
 from .forms import ProductCategoryAdminForm, ProductsAdminForm
 
 
+@admin.register(Responses)
+class ResponsesAdmin(admin.ModelAdmin):
+    list_display = ('created', 'product', 'name', 'comment', 'rating')
+    ordering = ('created', 'product')
+    list_filter = ('rating',)
+
+
 @admin.register(Customers)
 class CustomersAdmin(admin.ModelAdmin):
     list_display = ('email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
@@ -30,7 +37,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductBrand)
-class ProductBrand(admin.ModelAdmin):
+class ProductBrandAdmin(admin.ModelAdmin):
     ordering = ('name',)
     search_fields = ('name',)
 
