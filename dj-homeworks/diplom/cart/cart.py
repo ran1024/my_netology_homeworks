@@ -1,5 +1,4 @@
 from decimal import Decimal
-from shop.models import Products
 
 
 class Cart(object):
@@ -14,12 +13,8 @@ class Cart(object):
         self.cart = cart
 
     def __iter__(self):
-        product_ids = self.cart.keys()
-        products = Products.objects.filter(pk__in=product_ids)
-        for product in products:
-            self.cart[str(product.id)]['product'] = product
-
-        for item in self.cart.values():
+        for key, item in self.cart.items():
+            item['id'] = key
             item['price'] = Decimal(item['price'])
             item['total_price'] = item['price'] * item['quantity']
             yield item
@@ -32,11 +27,15 @@ class Cart(object):
         product_id = str(product.id)
         if product_id not in self.cart:
             self.cart[product_id] = {'quantity': 0, 'price': str(product.price)}
-
         if update_quantity:
             self.cart[product_id]['quantity'] += quantity
         else:
             self.cart[product_id]['quantity'] = quantity
+
+        self.cart[product_id]['image'] = str(product.image)
+        self.cart[product_id]['name'] = product.name
+        self.cart[product_id]['prod_quantity'] = product.quantity
+
         self.save()
 
     def save(self):

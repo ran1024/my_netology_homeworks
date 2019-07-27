@@ -61,7 +61,7 @@ def _order_create(request, cart, order_form, user):
     order.save()
 
     for item in cart:
-        product = Products.objects.get(pk=item['product'].id)
+        product = Products.objects.get(pk=item['id'])
         balance = product.quantity - item['quantity']
         if balance < 0:
             order.delete()
@@ -73,7 +73,7 @@ def _order_create(request, cart, order_form, user):
         product.save(update_fields=['quantity'])
 
         ProductsInOrder.objects.create(order=order,
-                                       product=item['product'],
+                                       product=product,
                                        number_of_units=item['quantity'],
                                        price_of_unit=item['price'],
                                        )

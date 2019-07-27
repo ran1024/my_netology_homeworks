@@ -36,6 +36,8 @@ def cart_detail(request):
     is_empty = False
     if cart.get_total_quantity() == 0:
         is_empty = True
+    for a in cart:
+        print(a)
     return render(request, 'cart/cart.html', {'cart': cart, 'is_empty': is_empty})
 
 
