@@ -4,7 +4,7 @@ from shop.models import Customers
 
 
 class Orders(models.Model):
-    customer = models.ForeignKey(Customers, on_delete=models.SET('---'), verbose_name='Покупатель')
+    customer = models.ForeignKey(Customers, null=True, on_delete=models.SET_NULL, verbose_name='Покупатель')
     comments = models.TextField(blank=True, null=True, default=None, verbose_name='Комментарий к заказу')
     total_number = models.SmallIntegerField(default=1, verbose_name='Общее количество')
     total_price = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='Общая стоимость')
