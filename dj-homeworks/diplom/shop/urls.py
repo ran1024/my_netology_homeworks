@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
-from .views import *
+from .views import main_page, show_category, product_detail, response_add, customer_login, customer_logout
 
 urlpatterns = [
     path('', main_page, name='main_page'),

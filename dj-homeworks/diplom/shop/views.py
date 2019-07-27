@@ -3,7 +3,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 
-from .models import *
+from .models import Products, ProductCategory, Customers
 from .forms import CustomerLoginForm, ResponseForm
 from cart.forms import CartAddProductForm
 from cart.cart import Cart

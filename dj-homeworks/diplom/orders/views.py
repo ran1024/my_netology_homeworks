@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
-from shop.models import Customers, Orders, ProductsInOrder, Products
+from shop.models import Customers, Products
+from .models import ProductsInOrder
 from .forms import OrderCreateForm, CustomerForm, CustomerIsLoginForm
 from cart.cart import Cart
 
