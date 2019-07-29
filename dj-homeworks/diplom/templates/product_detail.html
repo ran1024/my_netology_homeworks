@@ -7,20 +7,20 @@
 
     <div class="row">
       <div class="col-md-5 col-sm-12 text-center">
-        <img src="{{ product.image.url }}" width="280">
+        <img src="{{ object.image.url }}" width="280">
       </div>
 
       <div class="col-lg-7 col-md-7 col-sm-12 text-center">
           <div>
             <br>
-            <h3>{{ product.name }}</h3>
+            <h3>{{ object.name }}</h3>
             <br>
-            <p class="comment">{{ product.short_text }}</p>
+            <p class="comment">{{ object.short_text }}</p>
           </div>
           <div>
-              <p style="font-size: 1.6em;">Цена: {{ product.price }} руб.</p>
-              {% if product.quantity > 0 %}
-                  <form method="post" action="{% url 'cart:cart_add' product.id %}">
+              <p style="font-size: 1.6em;">Цена: {{ object.price }} руб.</p>
+              {% if object.quantity > 0 %}
+                  <form method="post" action="{% url 'cart:cart_add' object.id %}">
                     {% csrf_token %}
                     {{ cart_product_form }}
                     <input type="submit" class="btn btn-secondary" value="Добавить в корзину">
@@ -36,7 +36,7 @@
     <hr>
     <div class="row">
       <div class="col-lg-12 col-md-12 col-sm-12">
-        {{ product.description | safe }}
+        {{ object.description | safe }}
       </div>
     </div>
     <hr>
@@ -57,7 +57,7 @@
       <div class="col-lg-6 col-md-8 col-sm-12">
         <h4>Оставте отзыв:</h4>
 
-        <form action="{% url 'response_add' product.id %}" method="post">
+        <form action="{% url 'response_add' object.id %}" method="post">
           {% csrf_token %}
           <div class="form-group">
               {{ response_form.name.label }}

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404, get_list_or_40
 from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
+from django.views.generic.detail import DetailView
 
 from .models import Products, ProductCategory, Customers
 from .forms import CustomerLoginForm, ResponseForm
@@ -50,24 +51,19 @@ def show_category(request, category_id, brand_id):
     return render(request, template, context)
 
 
-def product_detail(request, product_id):
-    """ Страница с детальной информацией по товару и кнопкой заказа """
-    template = 'product_detail.html'
-    product = get_object_or_404(Products, pk=product_id)
-    responses = product.responses_set.all()
-    response_form = ResponseForm()
+class ProductDetailView(DetailView):
+    """ Страница с детальной информацией по товару, формой заказа и отзывами """
+    template_name = 'product_detail.html'
+    model = Products
 
-    cart = Cart(request)
-    prod_num = cart.get_product_quantity(product_id)
-    cart_product_form = CartAddProductForm(initial={'quantity': prod_num})
-
-    context = {
-        'cart_product_form': cart_product_form,
-        'product': product,
-        'responses': responses,
-        'response_form': response_form,
-        }
-    return render(request, template, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cart = Cart(self.request)
+        prod_num = cart.get_product_quantity(str(self.kwargs['pk']))
+        context['cart_product_form'] = CartAddProductForm(initial={'quantity': prod_num})
+        context['responses'] = context['object'].responses_set.all()
+        context['response_form'] = ResponseForm()
+        return context
 
 
 @require_POST

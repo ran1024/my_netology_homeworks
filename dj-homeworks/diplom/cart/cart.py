@@ -22,16 +22,13 @@ class Cart(object):
     def __len__(self):
         return sum(item['quantity'] for item in self.cart.values())
 
-    def add(self, product, quantity=1, update_quantity=False):
+    def add(self, product, quantity=1):
         """ Добавление товара в корзину и обновление количества товара """
         product_id = str(product.id)
         if product_id not in self.cart:
             self.cart[product_id] = {'quantity': 0, 'price': str(product.price)}
-        if update_quantity:
-            self.cart[product_id]['quantity'] += quantity
-        else:
-            self.cart[product_id]['quantity'] = quantity
 
+        self.cart[product_id]['quantity'] = quantity
         self.cart[product_id]['image'] = str(product.image)
         self.cart[product_id]['name'] = product.name
         self.cart[product_id]['prod_quantity'] = product.quantity
@@ -51,11 +48,16 @@ class Cart(object):
             self.save()
 
     def clear(self):
+        """ Полная очистка корзины """
         del self.session['cart']
         self.session.modified = True
 
     def get_product_quantity(self, product_id):
-        """ Получить количество конкретного товара """
+        """
+        Функция возвращает количество конкретного товара. Вызывается на странице детального
+        описания товара. Если в корзине данного товара нет, в поле: 'количество_товара_для_заказа'
+        пишется 1.
+        """
         if product_id in self.cart:
             return self.cart[product_id]['quantity']
         else:
