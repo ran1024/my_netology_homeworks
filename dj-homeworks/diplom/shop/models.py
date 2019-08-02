@@ -1,23 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
-class Customers(models.Model):
-    email = models.EmailField(max_length=64, unique=True, verbose_name='Эл.почта')
-    password = models.CharField(max_length=20, verbose_name='Пароль')
-    name = models.CharField(max_length=30, verbose_name='Имя')
-    surname = models.CharField(max_length=30, verbose_name='Фамилия')
+class Customer(AbstractUser):
     phone = models.CharField(max_length=20, verbose_name='Телефон')
     address = models.TextField(max_length=256, verbose_name='Адрес')
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации')
-    is_active = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.email
-        
-    class Meta:
-        ordering = ['-id']
-        verbose_name = 'Покупатель'
-        verbose_name_plural = 'Покупатели'
+    class Meta(AbstractUser.Meta):
+        pass
 
 
 class ProductCategory(models.Model):
@@ -53,8 +43,8 @@ class Products(models.Model):
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание')
     image = models.ImageField(upload_to='', verbose_name='Изображение')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата поступления')
-    is_active = models.BooleanField(default=True, verbose_name = 'В продаже')
-    is_top = models.BooleanField(default=False, verbose_name = 'Топ')
+    is_active = models.BooleanField(default=True, verbose_name='В продаже')
+    is_top = models.BooleanField(default=False, verbose_name='Топ')
     
     def __str__(self):
         return self.name

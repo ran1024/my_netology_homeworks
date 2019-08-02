@@ -8,7 +8,7 @@
   <div class="container mb-5">
     <h2>Оформление заказа</h2>
     <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-5">
             <h4>Заполните форму</h4>
             <form class="order-form" method="post">
                 {% csrf_token %}
@@ -17,9 +17,9 @@
                 <input type="submit" class="btn btn-primary" value="Отправить">
             </form>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
         </div>
-        <div class="order-info col-md-8">
+        <div class="order-info col-md-6">
             <h4>Ваш заказ</h4>
             <ol>
                 {% for item in cart %}

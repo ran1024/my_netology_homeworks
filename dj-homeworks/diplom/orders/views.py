@@ -1,7 +1,8 @@
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
-from shop.models import Customers, Products
+from shop.models import Customer, Products
 from .models import ProductsInOrder
 from .forms import OrderCreateForm, CustomerForm, CustomerIsLoginForm
 from cart.cart import Cart
@@ -11,9 +12,8 @@ def order_create(request):
     template = 'orders/create.html'
     cart = Cart(request)
     form_errors = ''
-    if request.session.get('customer'):
-        customer_id = request.session['customer']
-        customer = Customers.objects.get(pk=customer_id)
+    if request.user.is_authenticated:
+        customer = request.user
 
         if request.method == 'POST':
             customer_form = CustomerIsLoginForm(request.POST, instance=customer)
@@ -24,7 +24,6 @@ def order_create(request):
                 return _order_create(request, cart, order_form, customer)
             else:
                 form_errors = dict(customer_form.errors)
-                print(form_errors)
                 customer_form = CustomerIsLoginForm(instance=customer)
         else:
             customer_form = CustomerIsLoginForm(instance=customer)
@@ -33,13 +32,19 @@ def order_create(request):
             customer_form = CustomerForm(request.POST)
             order_form = OrderCreateForm(request.POST)
             if order_form.is_valid() and customer_form.is_valid():
-                if customer_form.has_changed():
-                    user = customer_form.save()
-                    session = request.session
-                    session['customer'] = user.id
+                username, _ = customer_form.cleaned_data['email'].split('@')
+                password = customer_form.cleaned_data['password1']
+
+                user = customer_form.save(commit=False)
+                user.username = username
+                user.save()
+
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    login(request, user)
                     return _order_create(request, cart, order_form, user)
             else:
-                form_errors = customer_form.errors
+                form_errors = dict(customer_form.errors)
                 customer_form = CustomerForm()
         else:
             customer_form = CustomerForm()

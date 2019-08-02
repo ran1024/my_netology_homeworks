@@ -1,6 +1,15 @@
 from django.contrib import admin
-from .models import Customers, ProductCategory, ProductBrand, Products, Responses
+from django.urls import reverse
+from .models import ProductCategory, ProductBrand, Products, Responses, Customer
 from .forms import ProductCategoryAdminForm, ProductsAdminForm
+
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('email', 'username', 'date_joined', 'is_active', 'is_staff', 'is_superuser')
+    list_filter = ('is_active', 'is_staff')
+    search_fields = ('email',)
+    ordering = ('email',)
 
 
 @admin.register(Responses)
@@ -8,14 +17,6 @@ class ResponsesAdmin(admin.ModelAdmin):
     list_display = ('created', 'product', 'name', 'comment', 'rating')
     ordering = ('created', 'product')
     list_filter = ('rating',)
-
-
-@admin.register(Customers)
-class CustomersAdmin(admin.ModelAdmin):
-    list_display = ('email', 'name', 'surname', 'phone', 'date_joined', 'is_active')
-    list_filter = ('is_active',)
-    search_fields = ('email',)
-    ordering = ('email',)
 
 
 class ProductsInline(admin.TabularInline):
@@ -53,3 +54,5 @@ class ProductsAdmin(admin.ModelAdmin):
     readonly_fields = ('created',)
     radio_fields = {'category': admin.HORIZONTAL}
 
+    def view_on_site(self, rec):
+        return reverse('product_detail', kwargs={'pk': rec.pk})

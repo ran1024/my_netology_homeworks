@@ -87,6 +87,7 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'shop.Customer'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -106,6 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+#LOGOUT_REDIRECT_URL = 'logout.html'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/

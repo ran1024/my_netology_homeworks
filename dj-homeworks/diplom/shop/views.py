@@ -1,10 +1,11 @@
+from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from django.views.generic.detail import DetailView
 
-from .models import Products, ProductCategory, Customers
+from .models import Products, ProductCategory
 from .forms import CustomerLoginForm, ResponseForm
 from cart.forms import CartAddProductForm
 from cart.cart import Cart
@@ -89,7 +90,7 @@ def data_for_context(request):
         'is_login': 'Войти',
         'categories': categories,
         }
-    if request.session.get('customer'):
+    if request.user.is_authenticated:
         context['is_login'] = 'Выйти'
     return context
 
@@ -100,23 +101,26 @@ def customer_login(request):
     if request.method == 'POST':
         form = CustomerLoginForm(request.POST)
         if form.is_valid():
-            if Customers.objects.filter(email=form.cleaned_data['email']).exists():
-                customer = Customers.objects.get(email=form.cleaned_data['email'])
-                if customer.password == form.cleaned_data['password']:
-                    session = request.session
-                    session['customer'] = customer.id
+            username = form.cleaned_data['email'].split('@')
+            password = form.cleaned_data['password']
+            user = authenticate(username=username[0], password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
                     return redirect(request.POST['next'])
                 else:
-                    context['error'] = 'Учётные данные не верны.'
+                    context['error'] = 'Пользователь заблокирован администратором системы.'
             else:
-                context['error'] = 'Данный пользователь не зарегистрирован.'
+                context['error'] = 'Учётные данные не верны.'
     form = CustomerLoginForm()
     context['form'] = form
     return render(request, template, context)
 
 
 def customer_logout(request):
+    session_cart = request.session['cart']
     template = 'logout.html'
-    context = {'next': request.GET['next']}
-    del request.session['customer']
+    context = {'next': request.GET['next'], 'user': request.user.username}
+    logout(request)
+    request.session['cart'] = session_cart
     return render(request, template, context)

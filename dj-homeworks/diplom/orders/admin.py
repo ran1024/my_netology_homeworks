@@ -5,6 +5,7 @@ from .models import Orders, ProductsInOrder
 class ProductsInOrderInline(admin.TabularInline):
     model = ProductsInOrder
     fields = ('product', 'number_of_units', 'price_of_unit', 'total_amount')
+    readonly_fields = ('product', 'price_of_unit', 'total_amount')
     extra = 0
     verbose_name_plural = 'Список товаров в заказе'
 
@@ -18,6 +19,8 @@ class OrdersAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('id',)
     date_hierarchy = 'created'
+    fields = (('status', 'customer'), 'total_number', 'total_price', 'comments', ('created', 'updated'))
+    readonly_fields = ('customer', 'total_number', 'total_price', 'comments', 'created', 'updated')
     inlines = (ProductsInOrderInline,)
 
     def is_comments(self, rec):

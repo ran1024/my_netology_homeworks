@@ -1,5 +1,6 @@
 from django import forms
-from .models import ProductCategory, Products, Responses
+from django.contrib.auth.forms import AuthenticationForm
+from .models import ProductCategory, Products, Responses, Customer
 
 from ckeditor.widgets import CKEditorWidget
 

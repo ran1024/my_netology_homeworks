@@ -1,10 +1,10 @@
 from django.db import models
 from django.db.models.signals import post_save
-from shop.models import Customers
+from shop.models import Customer
 
 
 class Orders(models.Model):
-    customer = models.ForeignKey(Customers, null=True, on_delete=models.SET_NULL, verbose_name='Покупатель')
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL, verbose_name='Покупатель')
     comments = models.TextField(blank=True, null=True, default=None, verbose_name='Комментарий к заказу')
     total_number = models.SmallIntegerField(default=1, verbose_name='Общее количество')
     total_price = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='Общая стоимость')
