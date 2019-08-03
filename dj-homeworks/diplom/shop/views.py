@@ -1,9 +1,10 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.views.decorators.http import require_POST
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormView
 
 from .models import Products, ProductCategory
 from .forms import CustomerLoginForm, ResponseForm
@@ -95,26 +96,18 @@ def data_for_context(request):
     return context
 
 
-def customer_login(request):
-    template = 'login.html'
-    context = {'next': request.GET['next']}
-    if request.method == 'POST':
-        form = CustomerLoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['email'].split('@')
-            password = form.cleaned_data['password']
-            user = authenticate(username=username[0], password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    return redirect(request.POST['next'])
-                else:
-                    context['error'] = 'Пользователь заблокирован администратором системы.'
-            else:
-                context['error'] = 'Учётные данные не верны.'
-    form = CustomerLoginForm()
-    context['form'] = form
-    return render(request, template, context)
+class CustomerLoginView(FormView):
+    """ Производит аутентификацию пользователя """
+    template_name = 'login.html'
+    form_class = CustomerLoginForm
+
+    def get_success_url(self):
+        return self.request.GET['next']
+
+    def form_valid(self, form):
+        self.user = form.get_user()
+        login(self.request, self.user)
+        return super(CustomerLoginView, self).form_valid(form)
 
 
 def customer_logout(request):

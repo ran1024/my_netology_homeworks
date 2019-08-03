@@ -9,6 +9,13 @@ from cart.cart import Cart
 
 
 def order_create(request):
+    """
+    Страница заказа товара.
+
+    Если покупатель зарегистрирован, форма заказа заполняется атрибутами из модели Customer.
+    Если не зарегистрирован или не вошёл на сайт, форма пустая и после заполнения покупатель
+    будет зарегистрирован на сайте, будет выполнен логин на сайт и оформлен заказ.
+    """
     template = 'orders/create.html'
     cart = Cart(request)
     form_errors = ''
@@ -32,17 +39,22 @@ def order_create(request):
             customer_form = CustomerForm(request.POST)
             order_form = OrderCreateForm(request.POST)
             if order_form.is_valid() and customer_form.is_valid():
-                username, _ = customer_form.cleaned_data['email'].split('@')
+                username = customer_form.cleaned_data['email']
                 password = customer_form.cleaned_data['password1']
 
-                user = customer_form.save(commit=False)
-                user.username = username
-                user.save()
+                if Customer.objects.filter(username=username).exists():
+                    form_errors = {'error': 'Пользователь с такой Эл.почтой уже существует.'
+                                            ' Пожалуста, войдите на сайт.'}
+                    customer_form = CustomerForm()
+                else:
+                    user = customer_form.save(commit=False)
+                    user.username = username
+                    user.save()
 
-                user = authenticate(username=username, password=password)
-                if user is not None:
-                    login(request, user)
-                    return _order_create(request, cart, order_form, user)
+                    user = authenticate(username=username, password=password)
+                    if user is not None:
+                        login(request, user)
+                        return _order_create(request, cart, order_form, user)
             else:
                 form_errors = dict(customer_form.errors)
                 customer_form = CustomerForm()
